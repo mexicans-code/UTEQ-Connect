@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../Views/MapScreen';
 import EventsNavigator from './EventsNavigator';

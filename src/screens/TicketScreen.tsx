@@ -12,7 +12,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import styles from '../styles/TicketScreenStyles';
 import { RouteProp } from '@react-navigation/native';
 import { EventsStackParamList } from '../types/navigation';
