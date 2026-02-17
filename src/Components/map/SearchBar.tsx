@@ -153,10 +153,10 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
                 style={styles.suggestionItem}
                 onPress={() => handleSelect(item)}
               >
-                <MaterialIcons 
-                  name={item.type === 'person' ? 'person' : 'place'} 
-                  size={20} 
-                  color={item.type === 'person' ? '#4285F4' : '#666'} 
+                <MaterialIcons
+                  name={item.type === 'person' ? 'person' : 'place'}
+                  size={20}
+                  color={item.type === 'person' ? '#4285F4' : '#666'}
                 />
                 <View style={{ flex: 1, marginLeft: 8 }}>
                   <Text style={styles.suggestionText}>{item.displayName}</Text>
