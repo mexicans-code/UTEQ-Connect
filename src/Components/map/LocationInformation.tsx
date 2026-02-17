@@ -19,15 +19,6 @@ interface LocationInformationProps {
             latitude: number;
             longitude: number;
         };
-        // Datos de persona
-        isPerson?: boolean;
-        numeroEmpleado?: string;
-        nombreCompleto?: string;
-        email?: string;
-        cargo?: string;
-        departamento?: string;
-        cubiculo?: string;
-        planta?: string;
     } | null;
     onClose: () => void;
 }
@@ -40,7 +31,7 @@ const LocationInformation: React.FC<LocationInformationProps> = ({ location, onC
                     <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                         <Ionicons name="close" size={28} color="#5F6368" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Información</Text>
+                    <Text style={styles.headerTitle}>Información del lugar</Text>
                     <View style={{ width: 28 }} />
                 </View>
                 <View style={styles.emptyState}>
@@ -54,12 +45,6 @@ const LocationInformation: React.FC<LocationInformationProps> = ({ location, onC
     const handleCallPress = () => {
         if (location.telefono) {
             Linking.openURL(`tel:${location.telefono}`);
-        }
-    };
-
-    const handleEmailPress = () => {
-        if (location.email) {
-            Linking.openURL(`mailto:${location.email}`);
         }
     };
 
@@ -93,125 +78,6 @@ const LocationInformation: React.FC<LocationInformationProps> = ({ location, onC
         return stars;
     };
 
-    // Si es una persona, mostrar vista de persona
-    if (location.isPerson) {
-        return (
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                        <Ionicons name="close" size={28} color="#5F6368" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Información del Personal</Text>
-                    <View style={{ width: 28 }} />
-                </View>
-
-                <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                    {/* Avatar */}
-                    <View style={styles.avatarSection}>
-                        <View style={styles.avatarCircle}>
-                            <Ionicons name="person" size={48} color="#4285F4" />
-                        </View>
-                    </View>
-
-                    {/* Nombre y cargo */}
-                    <View style={styles.section}>
-                        <Text style={styles.personName}>{location.nombreCompleto || location.nombre}</Text>
-                        {location.cargo && (
-                            <View style={styles.cargoTag}>
-                                <Text style={styles.cargoText}>{location.cargo}</Text>
-                            </View>
-                        )}
-                        {location.numeroEmpleado && (
-                            <Text style={styles.employeeNumber}>No. Empleado: {location.numeroEmpleado}</Text>
-                        )}
-                    </View>
-
-                    {/* Departamento */}
-                    {location.departamento && (
-                        <View style={styles.section}>
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="business" size={20} color="#4285F4" />
-                                <Text style={styles.sectionTitle}>Departamento</Text>
-                            </View>
-                            <Text style={styles.infoText}>{location.departamento}</Text>
-                        </View>
-                    )}
-
-                    {/* Ubicación física */}
-                    {(location.planta || location.cubiculo) && (
-                        <View style={styles.section}>
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="location" size={20} color="#4285F4" />
-                                <Text style={styles.sectionTitle}>Ubicación Física</Text>
-                            </View>
-                            {location.planta && (
-                                <Text style={styles.infoText}>📍 {location.planta}</Text>
-                            )}
-                            {location.cubiculo && (
-                                <Text style={styles.infoText}>🚪 Cubículo {location.cubiculo}</Text>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Información de contacto */}
-                    {(location.email || location.telefono) && (
-                        <View style={styles.section}>
-                            <View style={styles.sectionHeader}>
-                                <Ionicons name="mail" size={20} color="#4285F4" />
-                                <Text style={styles.sectionTitle}>Contacto</Text>
-                            </View>
-                            {location.email && (
-                                <TouchableOpacity onPress={handleEmailPress} style={styles.contactItem}>
-                                    <Ionicons name="mail-outline" size={18} color="#5F6368" />
-                                    <Text style={styles.contactText}>{location.email}</Text>
-                                </TouchableOpacity>
-                            )}
-                            {location.telefono && (
-                                <TouchableOpacity onPress={handleCallPress} style={styles.contactItem}>
-                                    <Ionicons name="call-outline" size={18} color="#5F6368" />
-                                    <Text style={styles.contactText}>{location.telefono}</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Botones de acción */}
-                    <View style={styles.actionsContainer}>
-                        {location.telefono && (
-                            <TouchableOpacity
-                                style={styles.actionButton}
-                                onPress={handleCallPress}
-                            >
-                                <Ionicons name="call" size={24} color="#4285F4" />
-                                <Text style={styles.actionButtonText}>Llamar</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {location.email && (
-                            <TouchableOpacity
-                                style={styles.actionButton}
-                                onPress={handleEmailPress}
-                            >
-                                <Ionicons name="mail" size={24} color="#4285F4" />
-                                <Text style={styles.actionButtonText}>Email</Text>
-                            </TouchableOpacity>
-                        )}
-
-                    </View>
-
-                    {/* {location.posicion && (
-                        <View style={styles.coordinatesSection}>
-                            <Text style={styles.coordinatesText}>
-                                Lat: {location.posicion.latitude.toFixed(6)}, Lng: {location.posicion.longitude.toFixed(6)}
-                            </Text>
-                        </View>
-                    )} */}
-                </ScrollView>
-            </View>
-        );
-    }
-
-    // Vista normal para lugares
     return (
         <View style={styles.container}>
             <View style={styles.header}>

@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   suggestionSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
     marginTop: 2,
   },
 });

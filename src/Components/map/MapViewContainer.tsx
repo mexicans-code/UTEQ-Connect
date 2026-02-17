@@ -5,12 +5,11 @@ import * as Location from 'expo-location';
 import axios from "axios";
 import styles from "../../styles/MapViewStyle";
 import SearchBar from "./SearchBar";
-import { Location as LocationType, RouteInfo, Coordinates, PersonData } from "../../types";
+import { Location as LocationType, RouteInfo, Coordinates } from "../../types";
 import { GOOGLE_MAPS_API_KEY } from "../../config/maps";
 import { decodePolyline } from "../../utils/polyline";
 import { calcularDistancia, estaFueraDeRuta } from "../../utils/geoUtils";
 import RouteInfoSheet from "./RouteInfoSheet";
-// NO IMPORTAR PersonInformation
 
 const UTEQ_COORDS: Coordinates = {
     latitude: 20.65398463798,
@@ -29,8 +28,6 @@ const MapViewContainer = () => {
     const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(null);
     const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
     const [routeCoordinates, setRouteCoordinates] = useState<Coordinates[]>([]);
-    // ELIMINAR selectedPerson - ya no lo necesitas
-
     const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
     const [loadingLocation, setLoadingLocation] = useState(true);
     const [isNavigating, setIsNavigating] = useState(false);
@@ -41,7 +38,6 @@ const MapViewContainer = () => {
     const regionRef = useRef<Region>(INITIAL_REGION);
     const locationSubscription = useRef<Location.LocationSubscription | null>(null);
     const lastRecalculationTime = useRef<number>(0);
-    
     useEffect(() => {
         obtenerUbicacionActual();
         return () => {
@@ -55,7 +51,7 @@ const MapViewContainer = () => {
         try {
             setLoadingLocation(true);
 
-            const USE_TESTING_LOCATION = true;
+            const USE_TESTING_LOCATION = false;
 
             if (USE_TESTING_LOCATION) {
                 setCurrentLocation(UTEQ_COORDS);
@@ -295,32 +291,8 @@ const MapViewContainer = () => {
         }
     };
 
-    const handleLocationSelect = (location: LocationType, personData?: PersonData) => {
-        console.log('📍 Location selected:', location.nombre);
-        console.log('👤 Person data:', personData);
-        
-        // Crear objeto combinado para LocationInformation
-        let locationWithPersonData = { ...location };
-        
-        if (personData) {
-            console.log('✅ Setting person data:', personData.nombreCompleto);
-            
-            // Combinar datos de persona con ubicación
-            locationWithPersonData = {
-                ...location,
-                isPerson: true,
-                numeroEmpleado: personData.numeroEmpleado,
-                nombreCompleto: personData.nombreCompleto,
-                email: personData.email,
-                telefono: personData.telefono,
-                cargo: personData.cargo,
-                departamento: personData.departamento,
-                cubiculo: personData.cubiculo,
-                planta: personData.planta,
-            };
-        }
-        
-        setSelectedLocation(locationWithPersonData);
+    const handleLocationSelect = (location: LocationType) => {
+        setSelectedLocation(location);
 
         const newRegion: Region = {
             latitude: location.posicion.latitude,
@@ -423,14 +395,11 @@ const MapViewContainer = () => {
             <RouteInfoSheet
                 routeInfo={routeInfo}
                 destinationName={selectedLocation?.nombre}
-                selectedLocation={selectedLocation}
                 onClose={handleCloseRoute}
                 onStartNavigation={handleStartNavigation}
                 isNavigating={isNavigating}
                 isRecalculating={recalculando}
             />
-
-            {/* ELIMINAR COMPLETAMENTE PersonInformation de aquí */}
         </View>
     );
 };
