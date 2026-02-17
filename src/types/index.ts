@@ -8,7 +8,7 @@ export interface Location {
     nombre: string;
     posicion: Coordinates;
     personData?: PersonData;
-    
+
     // Propiedades opcionales para lugares
     direccion?: string;
     telefono?: string;
@@ -19,7 +19,7 @@ export interface Location {
     descripcion?: string;
     tipo?: string;
     fotos?: string[];
-    
+
     // Propiedades opcionales para personas
     isPerson?: boolean;
     numeroEmpleado?: string;
