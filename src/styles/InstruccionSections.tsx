@@ -1,175 +1,261 @@
+import { StyleSheet, Platform } from "react-native";
 
-import { StyleSheet } from "react-native";
+export const ACCENT = "#1A73E8";
+export const GREEN  = "#34A853";
 
-export const styles = StyleSheet.create({
-    container: {
-        position: 'absolute',
-        top: 100,
-        left: 16,
-        right: 16,
-    },
-    
-    // Estilos minimizados
-    minimizedContainer: {
-        backgroundColor: 'white',
-        borderRadius: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    minimizedContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        gap: 12,
-    },
-    minimizedIconContainer: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#4285F4',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    minimizedTextContainer: {
-        flex: 1,
-    },
-    minimizedDistance: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#202124',
-        marginBottom: 4,
-    },
-    minimizedInstruction: {
-        fontSize: 14,
-        color: '#5F6368',
-        lineHeight: 18,
-    },
-
-    // Estilos expandidos
-    expandedContainer: {
-        backgroundColor: 'white',
-        borderRadius: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 8,
-        maxHeight: 400,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E8EAED',
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#202124',
-    },
-    stepsList: {
-        padding: 12,
-    },
-    stepItem: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-        borderRadius: 12,
-        marginBottom: 8,
-        backgroundColor: '#F8F9FA',
-    },
-    currentStepItem: {
-        backgroundColor: '#E8F0FE',
-        borderWidth: 2,
-        borderColor: '#4285F4',
-    },
-    pastStepItem: {
-        opacity: 0.6,
-    },
-    stepIconContainer: {
-        width: 40,
-        height: 40,
+export const instructionsSection = StyleSheet.create({
+    // ── Mini bar (navigating, collapsed)
+    miniBar: {
+        position: "absolute",
+        top: Platform.OS === "ios" ? 120 : 104,
+        left: 12,
+        right: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#fff",
         borderRadius: 20,
-        backgroundColor: '#E8F0FE',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        gap: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.14,
+        shadowRadius: 16,
+        elevation: 10,
+        zIndex: 150,
     },
-    currentStepIcon: {
-        backgroundColor: '#4285F4',
+    miniIconWrap: {
+        width: 46,
+        height: 46,
+        borderRadius: 16,
+        justifyContent: "center",
+        alignItems: "center",
     },
-    pastStepIcon: {
-        backgroundColor: '#E8EAED',
-    },
-    stepContent: {
+    miniText: {
         flex: 1,
     },
-    stepInstruction: {
-        fontSize: 14,
-        lineHeight: 20,
-        color: '#202124',
-        fontWeight: '500',
-        marginBottom: 6,
+    miniDist: {
+        fontSize: 18,
+        fontWeight: "800",
+        color: "#202124",
+        letterSpacing: -0.5,
     },
-    pastStepText: {
-        color: '#9AA0A6',
+    miniInstruction: {
+        fontSize: 13,
+        color: "#5F6368",
+        marginTop: 1,
     },
-    stepMeta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    stepDistance: {
-        fontSize: 12,
-        color: '#5F6368',
-        fontWeight: '600',
-    },
-    stepDivider: {
-        fontSize: 12,
-        color: '#DDD',
-    },
-    stepDuration: {
-        fontSize: 12,
-        color: '#5F6368',
-    },
-    currentBadge: {
-        backgroundColor: '#4285F4',
+    stepCounter: {
+        backgroundColor: "#F1F3F4",
+        borderRadius: 10,
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 12,
-        marginLeft: 8,
     },
-    currentBadgeText: {
+    stepCounterText: {
         fontSize: 11,
-        fontWeight: '700',
-        color: 'white',
+        fontWeight: "700",
+        color: "#5F6368",
     },
 
-    // Botón flotante
-    floatingButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#4285F4',
-        paddingVertical: 12,
+    // ── Float button (not navigating, list trigger)
+    floatBtn: {
+        position: "absolute",
+        bottom: 180,
+        right: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: ACCENT,
         paddingHorizontal: 16,
+        paddingVertical: 12,
         borderRadius: 24,
-        shadowColor: '#4285F4',
+        shadowColor: ACCENT,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
-        gap: 8,
-        alignSelf: 'flex-start',
+        shadowRadius: 12,
+        elevation: 8,
+        zIndex: 150,
     },
-    floatingButtonText: {
-        color: 'white',
+    floatBtnText: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "700",
+    },
+
+    // ── Expanded sheet
+    expandedSheet: {
+        position: "absolute",
+        top: Platform.OS === "ios" ? 120 : 104,
+        left: 12,
+        right: 12,
+        backgroundColor: "#fff",
+        borderRadius: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.14,
+        shadowRadius: 24,
+        elevation: 12,
+        zIndex: 150,
+        maxHeight: "55%",
+        overflow: "hidden",
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        paddingHorizontal: 18,
+        paddingTop: 16,
+        paddingBottom: 12,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#F1F3F4",
+    },
+    headerTitle: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#202124",
+    },
+    progressRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 6,
+    },
+    progressTrack: {
+        width: 120,
+        height: 4,
+        backgroundColor: "#F1F3F4",
+        borderRadius: 2,
+        overflow: "hidden",
+    },
+    progressFill: {
+        height: "100%",
+        backgroundColor: GREEN,
+        borderRadius: 2,
+    },
+    progressLabel: {
+        fontSize: 11,
+        color: GREEN,
+        fontWeight: "700",
+    },
+    closeBtn: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: "#F1F3F4",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    // ── Steps list
+    list: {
+        paddingHorizontal: 18,
+        paddingTop: 8,
+    },
+    stepRow: {
+        flexDirection: "row",
+        gap: 12,
+        paddingVertical: 4,
+    },
+
+    // ── Timeline
+    timelineCol: {
+        alignItems: "center",
+        width: 28,
+        paddingTop: 4,
+    },
+    timelineDot: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        backgroundColor: "#F1F3F4",
+        borderWidth: 2,
+        borderColor: "#E0E0E0",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1,
+    },
+    timelineDotCurrent: {
+        backgroundColor: ACCENT,
+        borderColor: ACCENT,
+        shadowColor: ACCENT,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    timelineDotPast: {
+        backgroundColor: GREEN,
+        borderColor: GREEN,
+    },
+    timelineLine: {
+        width: 2,
+        flex: 1,
+        minHeight: 16,
+        backgroundColor: "#E0E0E0",
+        marginVertical: 2,
+    },
+    timelineLinePast: {
+        backgroundColor: GREEN,
+    },
+
+    // ── Step content
+    stepContent: {
+        flex: 1,
+        paddingBottom: 16,
+        paddingTop: 4,
+    },
+    stepContentCurrent: {
+        backgroundColor: "#F0F6FF",
+        borderRadius: 14,
+        padding: 12,
+        marginBottom: 4,
+    },
+    stepTopRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 8,
+    },
+    stepInstruction: {
+        flex: 1,
+        fontSize: 13,
+        color: "#5F6368",
+        lineHeight: 18,
+        fontWeight: "500",
+    },
+    stepInstructionPast: {
+        color: "#BDC1C6",
+        textDecorationLine: "line-through",
+    },
+    stepInstructionCurrent: {
+        color: "#202124",
+        fontWeight: "700",
         fontSize: 14,
-        fontWeight: '600',
+    },
+    nowBadge: {
+        backgroundColor: ACCENT,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    nowBadgeText: {
+        fontSize: 10,
+        fontWeight: "800",
+        color: "#fff",
+        letterSpacing: 0.3,
+    },
+    stepMeta: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 5,
+    },
+    stepMetaText: {
+        fontSize: 11,
+        color: "#9AA0A6",
+    },
+    stepMetaDivider: {
+        fontSize: 11,
+        color: "#C5C8CE",
+        marginHorizontal: 2,
     },
 });

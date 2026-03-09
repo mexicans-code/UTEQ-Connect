@@ -99,10 +99,10 @@ const PersonInformation: React.FC<PersonInformationProps> = ({ person, onClose }
                                     <Text style={styles.sectionTitle}>Ubicación Física</Text>
                                 </View>
                                 {person.planta && (
-                                    <Text style={styles.infoText}>📍 {person.planta}</Text>
+                                    <Text style={styles.infoText}> {person.planta}</Text>
                                 )}
                                 {person.cubiculo && (
-                                    <Text style={styles.infoText}>🚪 Cubículo {person.cubiculo}</Text>
+                                    <Text style={styles.infoText}> Cubículo {person.cubiculo}</Text>
                                 )}
                             </View>
                         )}

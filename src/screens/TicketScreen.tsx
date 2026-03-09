@@ -12,7 +12,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles/TicketScreenStyles';
 import { RouteProp } from '@react-navigation/native';
 import { EventsStackParamList } from '../types/navigation';
@@ -188,7 +188,7 @@ const TicketScreen = () => {
   if (!event || !invitation) {
     return (
       <View style={styles.errorContainer}>
-        <Icon name="alert-circle-outline" size={64} color="#ccc" />
+        <Ionicons name="alert-circle-outline" size={64} color="#ccc" />
         <Text style={styles.errorText}>No se pudo cargar el boleto</Text>
         <TouchableOpacity
           style={styles.retryButton}
@@ -206,7 +206,7 @@ const TicketScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerIconContainer}>
-            <Icon name="ticket" size={48} color="#1a1a1a" />
+            <Ionicons name="ticket" size={48} color="#1a1a1a" />
           </View>
           <Text style={styles.headerTitle}>Tu Boleto de Evento</Text>
           <Text style={styles.headerSubtitle}>
@@ -221,7 +221,7 @@ const TicketScreen = () => {
 
             <View style={styles.eventInfo}>
               <View style={styles.eventInfoIconContainer}>
-                <Icon name="calendar-outline" size={18} color="#1a1a1a" />
+                <Ionicons name="calendar-outline" size={18} color="#1a1a1a" />
               </View>
               <View style={styles.eventInfoContent}>
                 <Text style={styles.eventInfoLabel}>Fecha</Text>
@@ -233,7 +233,7 @@ const TicketScreen = () => {
 
             <View style={styles.eventInfo}>
               <View style={styles.eventInfoIconContainer}>
-                <Icon name="time-outline" size={18} color="#1a1a1a" />
+                <Ionicons name="time-outline" size={18} color="#1a1a1a" />
               </View>
               <View style={styles.eventInfoContent}>
                 <Text style={styles.eventInfoLabel}>Horario</Text>
@@ -245,7 +245,7 @@ const TicketScreen = () => {
 
             <View style={styles.eventInfo}>
               <View style={styles.eventInfoIconContainer}>
-                <Icon name="location-outline" size={18} color="#1a1a1a" />
+                <Ionicons name="location-outline" size={18} color="#1a1a1a" />
               </View>
               <View style={styles.eventInfoContent}>
                 <Text style={styles.eventInfoLabel}>Lugar</Text>
@@ -291,7 +291,7 @@ const TicketScreen = () => {
 
               {invitation.estadoAsistencia === 'asistio' && (
                 <View style={[styles.statusBadge, { backgroundColor: '#4caf50', marginTop: 8 }]}>
-                  <Icon name="checkmark-circle" size={16} color="#fff" style={styles.statusIcon} />
+                  <Ionicons name="checkmark-circle" size={16} color="#fff" style={styles.statusIcon} />
                   <Text style={styles.statusText}>
                     {getAttendanceStatusText(invitation.estadoAsistencia)}
                   </Text>
@@ -304,7 +304,7 @@ const TicketScreen = () => {
         {/* Instructions */}
         <View style={styles.instructionsCard}>
           <View style={styles.instructionsHeader}>
-            <Icon name="list-outline" size={20} color="#1a1a1a" />
+            <Ionicons name="list-outline" size={20} color="#1a1a1a" />
             <Text style={styles.instructionsTitle}>Instrucciones</Text>
           </View>
           <View style={styles.instructionItem}>

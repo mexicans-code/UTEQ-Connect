@@ -20,7 +20,7 @@ import { API_URL } from '../api/config';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
-const API_BASE_URL = 'http://192.168.100.42:3000';
+const API_BASE_URL = 'http://192.168.100.26:3000';
 
 type EventDetailRouteProp = RouteProp<EventsStackParamList, 'EventDetail'>;
 type EventDetailNavigationProp = StackNavigationProp<EventsStackParamList, 'EventDetail'>;

@@ -1,224 +1,246 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 
-export const styles = StyleSheet.create({
-    container: {
-        position: 'absolute',
+export const ACCENT = "#1A73E8";
+export const GREEN  = "#34A853";
+
+export const routeInfoSheetStyles = StyleSheet.create({
+    sheet: {
+        position: "absolute",
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'white',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 20,
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -6 },
+        shadowOpacity: 0.13,
+        shadowRadius: 22,
+        elevation: 22,
+        zIndex: 90,
+        paddingBottom: Platform.OS === "ios" ? 34 : 20,
     },
-    handleContainer: {
-        paddingVertical: 12,
-        alignItems: 'center',
+    handleWrap: {
+        alignItems: "center",
+        paddingTop: 12,
+        paddingBottom: 4,
     },
     handle: {
-        width: 48,
+        width: 36,
         height: 4,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: "#E0E0E0",
         borderRadius: 2,
     },
-    content: {
+
+    // ── Minimized
+    minimizedRow: {
+        flexDirection: "row",
+        alignItems: "center",
         paddingHorizontal: 20,
-        paddingBottom: 32,
-    },
-    
-    //   Estilos para vista minimizada
-    minimizedView: {
-        paddingBottom: 8,
-    },
-    minimizedHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        paddingVertical: 12,
         gap: 12,
     },
-    minimizedIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#4285F4',
-        justifyContent: 'center',
-        alignItems: 'center',
+    miniIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: ACCENT,
+        justifyContent: "center",
+        alignItems: "center",
     },
-    minimizedInfo: {
+    miniIconActive: {
+        backgroundColor: GREEN,
+    },
+    miniInfo: {
         flex: 1,
     },
-    minimizedDestination: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#202124',
-        marginBottom: 4,
+    miniDest: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#202124",
     },
-    minimizedStats: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    miniStats: {
+        flexDirection: "row",
+        alignItems: "center",
         gap: 6,
+        marginTop: 2,
     },
-    minimizedStat: {
-        fontSize: 13,
-        color: '#5F6368',
-        fontWeight: '500',
+    miniStat: {
+        fontSize: 12,
+        color: "#5F6368",
+        fontWeight: "500",
     },
-    minimizedDivider: {
-        fontSize: 13,
-        color: '#DDD',
+    miniDot: {
+        fontSize: 12,
+        color: "#BDC1C6",
     },
-    minimizedPulse: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#34A853',
+    liveDot: {
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
+        backgroundColor: GREEN,
     },
-    
-    // Estilos existentes
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 24,
+
+    // ── Expanded
+    expandedContent: {
+        paddingHorizontal: 20,
+        paddingTop: 4,
+        gap: 14,
     },
-    headerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 12,
-        backgroundColor: '#E8F0FE',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    headerText: {
-        flex: 1,
-    },
-    title: {
-        fontSize: 13,
-        color: '#5F6368',
-        marginBottom: 2,
-        fontWeight: '500',
-    },
-    destination: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#202124',
-        letterSpacing: -0.3,
-    },
-    infoContainer: {
-        flexDirection: 'row',
+    destHeader: {
+        flexDirection: "row",
+        alignItems: "center",
         gap: 12,
-        marginBottom: 20,
     },
-    infoCard: {
+    destIconWrap: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        backgroundColor: "#EAF1FB",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    destInfo: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
-        borderRadius: 16,
-        padding: 16,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#E8EAED',
     },
-    iconCircle: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'white',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 2,
-    },
-    infoLabel: {
+    destLabel: {
         fontSize: 11,
-        color: '#5F6368',
-        marginBottom: 4,
-        fontWeight: '500',
-        textTransform: 'uppercase',
+        color: "#9AA0A6",
+        fontWeight: "600",
+        textTransform: "uppercase",
         letterSpacing: 0.5,
     },
-    infoValue: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#202124',
-        letterSpacing: -0.5,
+    destName: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#202124",
+        letterSpacing: -0.2,
+        marginTop: 1,
     },
-    recalculatingBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#E8F0FE',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        marginBottom: 16,
+    xBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#F1F3F4",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    // ── Stats row
+    statsRow: {
+        flexDirection: "row",
+        backgroundColor: "#F8F9FA",
+        borderRadius: 20,
+        padding: 16,
+        alignItems: "center",
+    },
+    statCard: {
+        flex: 1,
+        alignItems: "center",
+        gap: 6,
+    },
+    statIcon: {
+        width: 38,
+        height: 38,
+        borderRadius: 13,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    statValue: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#202124",
+        letterSpacing: -0.2,
+        textAlign: "center",
+    },
+    statLabel: {
+        fontSize: 11,
+        color: "#9AA0A6",
+        fontWeight: "500",
+    },
+    statDivider: {
+        width: StyleSheet.hairlineWidth,
+        height: 50,
+        backgroundColor: "#E0E0E0",
+        marginHorizontal: 8,
+    },
+
+    // ── Recalculating banner
+    recalcBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        backgroundColor: "#FFF8E1",
+        borderRadius: 14,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: "#FFE082",
+    },
+    recalcText: {
+        fontSize: 13,
+        color: "#9A7D00",
+        fontWeight: "600",
+    },
+
+    // ── Action buttons
+    actions: {
         gap: 10,
     },
-    recalculatingText: {
-        fontSize: 14,
-        color: '#4285F4',
-        fontWeight: '600',
+    startBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+        backgroundColor: ACCENT,
+        paddingVertical: 15,
+        borderRadius: 24,
+        shadowColor: ACCENT,
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.32,
+        shadowRadius: 14,
+        elevation: 8,
+        overflow: "hidden",
     },
-    buttonContainer: {
-        gap: 12,
+    startBtnActive: {
+        backgroundColor: GREEN,
+        shadowColor: GREEN,
     },
-    startButton: {
-        backgroundColor: '#4285F4',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        borderRadius: 12,
-        gap: 8,
-        shadowColor: '#4285F4',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+    startBtnDisabled: {
+        opacity: 0.6,
     },
-    startButtonDisabled: {
-        backgroundColor: '#93B4E8',
-        opacity: 0.7,
-    },
-    startButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: '600',
+    startBtnText: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "700",
         letterSpacing: 0.2,
     },
-    pulseIndicator: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#34A853',
-        marginRight: 4,
+    pulseRing: {
+        position: "absolute",
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: "rgba(255,255,255,0.15)",
     },
-    closeButton: {
-        backgroundColor: 'transparent',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        borderRadius: 12,
-        gap: 6,
-        borderWidth: 1.5,
-        borderColor: '#E8EAED',
+    secondaryRow: {
+        flexDirection: "row",
+        gap: 10,
     },
-    closeButtonText: {
-        color: '#5F6368',
-        fontSize: 15,
-        fontWeight: '600',
+    secondaryBtn: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 7,
+        backgroundColor: "#EAF1FB",
+        paddingVertical: 12,
+        borderRadius: 18,
+    },
+    secondaryBtnText: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: ACCENT,
+    },
+    closeSecondaryBtn: {
+        backgroundColor: "#F1F3F4",
     },
 });

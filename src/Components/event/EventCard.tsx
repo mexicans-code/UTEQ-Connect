@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import styles from '../../styles/EventCardStyle';
 
-const API_BASE_URL = 'http://192.168.100.42:3000';
+const API_BASE_URL = 'http://192.168.100.26:3000';
 
 const EventCard = ({ event, onPress }) => {
   const formatDate = (dateString) => {

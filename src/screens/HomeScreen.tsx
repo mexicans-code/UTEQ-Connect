@@ -25,8 +25,6 @@ type HomeScreenProps = {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.9;
 
-const API_BASE_URL = 'http://192.168.100.42:3000';
-
 const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
   const [destinations, setDestinations] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -42,11 +40,7 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
   const loadUserData = async () => {
     try {
       const userName = await AsyncStorage.getItem('userName');
-      if (userName) {
-        setUserName(userName);
-      } else {
-        setUserName('Usuario');
-      }
+      setUserName(userName || 'Usuario');
     } catch (error) {
       console.error('Error loading user data:', error);
       setUserName('Usuario');
@@ -54,27 +48,25 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
   };
 
   const FEATURED_DESTINATION_IDS = [
-    '6', 
-    '25',  
-    '12',  
-    '16',  
-    '38', 
-    '17', 
+    '6',
+    '25',
+    '12',
+    '16',
+    '38',
+    '17',
   ];
 
   const fetchDestinations = async () => {
     try {
       const response = await api.get('/locations');
       const allData = response.data.data;
-      
+
       console.log('📍 Total destinos recibidos:', allData.length);
-      
-      const filteredDestinations = allData.filter((destination: any) => 
+
+      const filteredDestinations = allData.filter((destination: any) =>
         FEATURED_DESTINATION_IDS.includes(destination.id)
       );
-      
-      console.log('📍 Destinos filtrados:', filteredDestinations.length);
-      
+
       const sortedDestinations = FEATURED_DESTINATION_IDS
         .map(id => {
           const dest = filteredDestinations.find((d: any) => d.id === id);
@@ -85,8 +77,8 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
           }
           return dest;
         })
-        .filter(dest => dest !== undefined); 
-      
+        .filter(dest => dest !== undefined);
+
       setDestinations(sortedDestinations);
     } catch (error) {
       console.error('❌ Error fetching destinations:', error);
@@ -113,15 +105,8 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove([
-        'userToken',
-        'userId',
-        'userEmail',
-        'userName',
-        'userRol'
-      ]);
-      
-      console.log('Logout exitoso, datos limpiados');
+      await AsyncStorage.multiRemove(['userToken', 'userId', 'userEmail', 'userName', 'userRol']);
+      console.log('Logout exitoso');
       setIsLoggedIn(false);
     } catch (error) {
       console.error('Error during logout:', error);
@@ -129,23 +114,12 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
     }
   };
 
-  // Función para obtener la URL completa de la imagen
-  const getImageUrl = (imagePath: string | undefined) => {
-    if (!imagePath) {
-      console.log('⚠️ No hay imagen para este destino');
-      return null;
-    }
-    
-    // Si la imagen ya es una URL completa, retornarla
-    if (imagePath.startsWith('http')) {
-      console.log('🌐 Imagen con URL completa:', imagePath);
-      return imagePath;
-    }
-    
-    // Construir URL completa
-    const fullUrl = `${API_BASE_URL}/${imagePath}`;
-    console.log('🖼️ URL de imagen construida:', fullUrl);
-    return fullUrl;
+  // Las imágenes ahora vienen con URL completa de Cloudinary
+  // Si por alguna razón viene un path relativo antiguo, lo ignoramos
+  const getImageUrl = (imagePath: string | undefined): string | null => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return null; // paths locales antiguos ya no son válidos
   };
 
   return (
@@ -153,9 +127,7 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -164,7 +136,6 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
             <Text style={styles.greeting}>Hola </Text>
             <Text style={styles.title}>{userName}</Text>
           </View>
-
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={{ color: '#1e3a5f', fontWeight: '700' }}>Logout</Text>
           </TouchableOpacity>
@@ -186,7 +157,6 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
           >
             {destinations.map((destination, index) => {
               const imageUrl = getImageUrl(destination.image);
-              
               return (
                 <View
                   key={destination._id}
@@ -198,13 +168,8 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
                         source={{ uri: imageUrl }}
                         style={styles.cardImage}
                         resizeMode="cover"
-                        onError={(error) => {
-                          console.log('❌ Error cargando imagen:', imageUrl);
-                          console.log('Error details:', error.nativeEvent.error);
-                        }}
-                        onLoad={() => {
-                          console.log('✅ Imagen cargada exitosamente:', imageUrl);
-                        }}
+                        onError={() => console.log('❌ Error cargando imagen:', imageUrl)}
+                        onLoad={() => console.log('✅ Imagen cargada:', imageUrl)}
                       />
                     ) : (
                       <View style={styles.cardImagePlaceholder}>
@@ -219,7 +184,6 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
                     <Text style={styles.cardTitle} numberOfLines={2}>
                       {destination.nombre}
                     </Text>
-
                     <TouchableOpacity
                       style={styles.cardButton}
                       onPress={() => handleNavigateToDestination(destination)}
@@ -235,10 +199,7 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
 
           <View style={styles.pagination}>
             {destinations.map((_, index) => (
-              <View
-                key={index}
-                style={[styles.dot, index === activeSlide && styles.dotActive]}
-              />
+              <View key={index} style={[styles.dot, index === activeSlide && styles.dotActive]} />
             ))}
           </View>
         </View>
@@ -247,11 +208,7 @@ const HomeScreen = ({ navigation, setIsLoggedIn }: HomeScreenProps) => {
         <View style={styles.calendarSection}>
           <Text style={styles.sectionTitle}>Calendario UTEQ 2026</Text>
           <View style={styles.calendarCard}>
-            <Image
-              source={calendario1}
-              style={styles.calendarLargeImage}
-              resizeMode="contain"
-            />
+            <Image source={calendario1} style={styles.calendarLargeImage} resizeMode="contain" />
           </View>
         </View>
       </ScrollView>
