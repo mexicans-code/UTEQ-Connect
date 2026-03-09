@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import styles from '../styles/EventDetailScreenStyles';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,10 +21,10 @@ import { API_URL } from '../api/config';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
-const API_BASE_URL = 'http://192.168.100.26:3000';
-
 type EventDetailRouteProp = RouteProp<EventsStackParamList, 'EventDetail'>;
 type EventDetailNavigationProp = StackNavigationProp<EventsStackParamList, 'EventDetail'>;
+
+const ACCENT = '#1A73E8';
 
 const EventDetailScreen = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -31,7 +32,7 @@ const EventDetailScreen = () => {
   const route = useRoute<EventDetailRouteProp>();
   const { eventId } = route.params;
   
-  const [event, setEvent] = useState(null);
+  const [event, setEvent] = useState<any>(null);
   const [invitation, setInvitation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
@@ -47,10 +48,8 @@ const EventDetailScreen = () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const storedUserId = await AsyncStorage.getItem('userId');
-
       setIsAuthenticated(!!token);
       setUserId(storedUserId);
-
       await fetchEventDetails(token, storedUserId);
     } catch (error) {
       console.error('Error checking auth:', error);
@@ -68,7 +67,6 @@ const EventDetailScreen = () => {
         `${API_URL}/events/${eventId}`,
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
-
       setEvent(eventResponse.data.data);
 
       if (token && currentUserId) {
@@ -77,19 +75,10 @@ const EventDetailScreen = () => {
             `${API_URL}/invitaciones/user/${currentUserId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-
           const invitations = invitationsResponse.data.data;
-          const userInvitation = invitations.find(
-            (inv: any) => inv.evento?._id === eventId
-          );
-
-          if (userInvitation) {
-            setInvitation(userInvitation);
-          } else {
-            setInvitation(null);
-          }
-        } catch (error) {
-          console.log('No invitation found');
+          const userInvitation = invitations.find((inv: any) => inv.evento?._id === eventId);
+          setInvitation(userInvitation || null);
+        } catch {
           setInvitation(null);
         }
       }
@@ -111,12 +100,7 @@ const EventDetailScreen = () => {
         'Debes iniciar sesión en la aplicación para poder registrarte a este evento.',
         [
           { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Iniciar Sesión',
-            onPress: () => {
-              navigation.navigate('Auth' as any, { screen: 'Login' });
-            },
-          },
+          { text: 'Iniciar Sesión', onPress: () => navigation.navigate('Auth' as any, { screen: 'Login' }) },
         ]
       );
       return;
@@ -132,57 +116,33 @@ const EventDetailScreen = () => {
           onPress: async () => {
             setRegistering(true);
             try {
-              const url = `${API_URL}/invitaciones/event/${eventId}/register`;
-
               const response = await axios.post(
-                url,
+                `${API_URL}/invitaciones/event/${eventId}/register`,
                 {},
-                { 
-                  headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                  } 
-                }
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
               );
-
               Alert.alert(
                 '¡Registro Exitoso!',
                 'Te has registrado correctamente al evento. Se ha enviado tu boleto a tu correo electrónico.',
-                [
-                  {
-                    text: 'Ver Mi Boleto',
-                    onPress: () => {
-                      const newInvitation = response.data.data.invitation;
-                      setInvitation(newInvitation);
-                      navigation.navigate('Ticket', { eventId });
-                    },
+                [{
+                  text: 'Ver Mi Boleto',
+                  onPress: () => {
+                    setInvitation(response.data.data.invitation);
+                    navigation.navigate('Ticket', { eventId });
                   },
-                ]
+                }]
               );
             } catch (error: any) {
-              console.error('❌ Error registering:', error);
-              
               if (error.response?.status === 401 || error.response?.data?.requiresAuth) {
-                Alert.alert(
-                  'Sesión Expirada',
-                  'Tu sesión ha expirado. Por favor inicia sesión nuevamente.',
-                  [
-                    {
-                      text: 'Iniciar Sesión',
-                      onPress: () => {
-                        AsyncStorage.removeItem('userToken');
-                        navigation.navigate('Auth' as any, { screen: 'Login' });
-                      },
-                    },
-                  ]
-                );
+                Alert.alert('Sesión Expirada', 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.', [{
+                  text: 'Iniciar Sesión',
+                  onPress: () => {
+                    AsyncStorage.removeItem('userToken');
+                    navigation.navigate('Auth' as any, { screen: 'Login' });
+                  },
+                }]);
               } else {
-                Alert.alert(
-                  'Error',
-                  error.response?.data?.error || 
-                  error.response?.data?.message || 
-                  'No se pudo completar el registro. Por favor intenta de nuevo.'
-                );
+                Alert.alert('Error', error.response?.data?.error || 'No se pudo completar el registro. Por favor intenta de nuevo.');
               }
             } finally {
               setRegistering(false);
@@ -193,35 +153,26 @@ const EventDetailScreen = () => {
     );
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-MX', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC'
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
     });
   };
 
-  const formatDateRange = (startDate, endDate) => {
+  const formatDateRange = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
     const startDay = new Date(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
     const endDay = new Date(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
-    
-    if (startDay.getTime() === endDay.getTime()) {
-      return formatDate(startDate);
-    } else {
-      return `${formatDate(startDate)} hasta ${formatDate(endDate)}`;
-    }
+    if (startDay.getTime() === endDay.getTime()) return formatDate(startDate);
+    return `${formatDate(startDate)} hasta ${formatDate(endDate)}`;
   };
 
-  const getImageUrl = (imagePath) => {
+  const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `${API_BASE_URL}/${imagePath}`;
+    return null;
   };
 
   if (loading) {
@@ -233,16 +184,12 @@ const EventDetailScreen = () => {
     );
   }
 
-  // ✅ Verificar si event existe antes de renderizar
   if (!event) {
     return (
       <View style={styles.loadingContainer}>
         <Icon name="alert-circle-outline" size={64} color="#ccc" />
         <Text style={styles.loadingText}>No se pudo cargar el evento</Text>
-        <TouchableOpacity
-          style={styles.registerButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.registerButton} onPress={() => navigation.goBack()}>
           <Text style={styles.registerButtonText}>Volver</Text>
         </TouchableOpacity>
       </View>
@@ -251,26 +198,21 @@ const EventDetailScreen = () => {
 
   const imageUrl = getImageUrl(event.image);
 
+  // Espacio populado (objeto) o null si solo es id string
+  const espacio = event.espacio && typeof event.espacio === 'object' ? event.espacio : null;
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header con imagen */}
         <View style={styles.headerImage}>
           {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl }}
-              style={styles.eventHeaderImage}
-              resizeMode="cover"
-              onError={(error) => {
-                console.log('Error cargando imagen del evento:', imageUrl);
-              }}
-            />
+            <Image source={{ uri: imageUrl }} style={styles.eventHeaderImage} resizeMode="cover" />
           ) : (
             <View style={styles.headerImagePlaceholder}>
               <Icon name="calendar" size={80} color="#bbb" />
             </View>
           )}
-          
           {event.activo && (
             <View style={styles.statusBadge}>
               <Icon name="checkmark-circle" size={16} color="#fff" style={styles.statusIcon} />
@@ -283,42 +225,70 @@ const EventDetailScreen = () => {
           <Text style={styles.title}>{event.titulo}</Text>
 
           <View style={styles.infoCard}>
+            {/* Fecha */}
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
                 <Icon name="calendar-outline" size={20} color="#1a1a1a" />
               </View>
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Fecha</Text>
-                <Text style={styles.infoValue}>
-                  {formatDateRange(event.fechaInicio, event.fechaFin)}
-                </Text>
+                <Text style={styles.infoValue}>{formatDateRange(event.fechaInicio, event.fechaFin)}</Text>
               </View>
             </View>
 
+            {/* Horario */}
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
                 <Icon name="time-outline" size={20} color="#1a1a1a" />
               </View>
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Horario</Text>
-                <Text style={styles.infoValue}>
-                  {event.horaInicio} - {event.horaFin}
-                </Text>
+                <Text style={styles.infoValue}>{event.horaInicio} - {event.horaFin}</Text>
               </View>
             </View>
 
+            {/* Ubicación */}
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
                 <Icon name="location-outline" size={20} color="#1a1a1a" />
               </View>
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>Ubicación</Text>
-                <Text style={styles.infoValue}>
-                  {event.destino?.nombre || 'No especificada'}
-                </Text>
+                <Text style={styles.infoValue}>{event.destino?.nombre || 'No especificada'}</Text>
               </View>
             </View>
 
+            {/* Espacio / Salón */}
+            {espacio && (
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <MaterialCommunityIcons name="door-open" size={20} color="#1a1a1a" />
+                </View>
+                <View style={styles.infoTextContainer}>
+                  <Text style={styles.infoLabel}>Espacio / Salón</Text>
+                  <Text style={styles.infoValue}>
+                    {espacio.nombre}
+                    {espacio.planta ? ` · Planta ${espacio.planta}` : ''}
+                  </Text>
+                  {espacio.descripcion ? (
+                    <Text style={[styles.infoValue, { fontSize: 12, color: '#888', marginTop: 2 }]}>
+                      {espacio.descripcion}
+                    </Text>
+                  ) : null}
+                </View>
+                {/* Badge disponible/ocupado */}
+                <View style={{
+                  backgroundColor: espacio.ocupado ? '#FDEEEC' : '#E8F5E9',
+                  borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'center',
+                }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: espacio.ocupado ? '#EA4335' : '#34A853' }}>
+                    {espacio.ocupado ? 'Ocupado' : 'Disponible'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Disponibilidad */}
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
                 <Icon name="people-outline" size={20} color="#1a1a1a" />
@@ -375,9 +345,7 @@ const EventDetailScreen = () => {
         ) : (
           <View style={styles.unavailableContainer}>
             <Text style={styles.unavailableText}>
-              {!event.activo
-                ? 'Este evento no está activo'
-                : 'No hay cupos disponibles'}
+              {!event.activo ? 'Este evento no está activo' : 'No hay cupos disponibles'}
             </Text>
           </View>
         )}

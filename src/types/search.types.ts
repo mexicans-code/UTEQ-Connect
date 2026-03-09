@@ -1,3 +1,14 @@
+// ─── IEspacio ─────────────────────────────────────────────────────────────────
+export interface IEspacio {
+    _id: string;
+    nombre: string;
+    destino: string | IDestino;
+    cupos: number;
+    ocupado: boolean;
+    planta: "alta" | "baja" | "única";
+    descripcion?: string;
+}
+
 // ─── Matching IDestino ────────────────────────────────────────────────────────
 export interface IDestino {
     _id: string;
@@ -7,6 +18,7 @@ export interface IDestino {
         longitude: number;
     };
     image?: string;
+    espacios?: IEspacio[];   // populated when fetched with espacios
     rutaPregrabada?: {
         origen: string;
         puntos: { latitude: number; longitude: number }[];
@@ -20,11 +32,12 @@ export interface IEvent {
     _id: string;
     titulo: string;
     descripcion?: string;
-    fechaInicio: string;   // ISO string from API
+    fechaInicio: string;
     fechaFin: string;
     horaInicio: string;
     horaFin: string;
-    destino: string | IDestino;  // populated or ObjectId string
+    destino: string | IDestino;
+    espacio?: string | IEspacio; // populated or ObjectId string
     cupos: number;
     cuposDisponibles: number;
     creadoPor?: string;
@@ -54,7 +67,6 @@ export interface IPersonal {
     rol: "admin" | "superadmin";
     createdAt?: string;
     updatedAt?: string;
-    // Helper getter (not from DB)
     nombreCompleto?: string;
 }
 

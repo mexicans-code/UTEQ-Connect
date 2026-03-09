@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, Linking, StyleSheet, Platform, Image } from "react-native";
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { IDestino, IPersonal, IEvent } from "../../types/search.types";
+import { IDestino, IPersonal, IEvent, IEspacio } from "../../types/search.types";
 import { buildImageUrl } from "../../utils/imageUrl";
 
 const ACCENT = "#1A73E8";
@@ -13,19 +13,78 @@ interface LocationInformationProps {
     onClose: () => void;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const getEspacio = (e: string | IEspacio | undefined | null): IEspacio | null => {
+    if (!e || typeof e === "string") return null;
+    return e as IEspacio;
+};
+
+const PlantaBadge: React.FC<{ planta: string }> = ({ planta }) => (
+    <View style={localInfoStyles.plantaBadge}>
+        <Text style={localInfoStyles.plantaBadgeText}>Planta {planta}</Text>
+    </View>
+);
+
+// ─── Espacio card (reutilizable) ──────────────────────────────────────────────
+const EspacioCard: React.FC<{ espacio: IEspacio }> = ({ espacio }) => (
+    <View style={localInfoStyles.espacioCard}>
+        {/* Nombre + badge planta en la misma fila, nombre trunca si es largo */}
+        <View style={localInfoStyles.espacioHeaderRow}>
+            <MaterialCommunityIcons name="office-building" size={15} color="#5F6368" />
+            <Text style={localInfoStyles.espacioNombre} numberOfLines={1} ellipsizeMode="tail">
+                {espacio.nombre}
+            </Text>
+            <PlantaBadge planta={espacio.planta} />
+        </View>
+
+        {/* Descripción */}
+        {espacio.descripcion && (
+            <View style={localInfoStyles.espacioRow}>
+                <Ionicons name="information-circle-outline" size={14} color="#9AA0A6" />
+                <Text style={localInfoStyles.espacioDesc}>{espacio.descripcion}</Text>
+            </View>
+        )}
+
+        {/* Cupos + badge ocupado/disponible */}
+        <View style={localInfoStyles.espacioFooterRow}>
+            <View style={localInfoStyles.espacioRow}>
+                <Ionicons name="people-outline" size={14} color="#9AA0A6" />
+                <Text style={localInfoStyles.espacioCupos}>{espacio.cupos} cupos</Text>
+            </View>
+            <View style={[
+                localInfoStyles.statusBadge,
+                { backgroundColor: espacio.ocupado ? "#FDEEEC" : "#E8F5E9" }
+            ]}>
+                <View style={[
+                    localInfoStyles.statusDot,
+                    { backgroundColor: espacio.ocupado ? "#EA4335" : "#34A853" }
+                ]} />
+                <Text style={[
+                    localInfoStyles.statusText,
+                    { color: espacio.ocupado ? "#EA4335" : "#34A853" }
+                ]}>
+                    {espacio.ocupado ? "Ocupado" : "Disponible"}
+                </Text>
+            </View>
+        </View>
+    </View>
+);
+
 // ─── Event view ───────────────────────────────────────────────────────────────
 const EventView: React.FC<{ event: IEvent; onClose: () => void }> = ({ event, onClose }) => {
     const [imgError, setImgError] = React.useState(false);
     const imageUrl = buildImageUrl(event.image);
     const hasImage = !!imageUrl && !imgError;
+    const espacio = getEspacio(event.espacio);
 
     const formatDate = (iso: string) => {
-    try {
-        const [year, month, day] = iso.substring(0, 10).split('-').map(Number);
-        return new Date(year, month - 1, day).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
-    }
-    catch { return iso; }
-};
+        try {
+            const [year, month, day] = iso.substring(0, 10).split("-").map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString("es-MX", {
+                day: "numeric", month: "long", year: "numeric",
+            });
+        } catch { return iso; }
+    };
 
     const isSameDay = event.fechaInicio.substring(0, 10) === event.fechaFin.substring(0, 10);
     const sinCupos = event.cuposDisponibles === 0;
@@ -41,7 +100,6 @@ const EventView: React.FC<{ event: IEvent; onClose: () => void }> = ({ event, on
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Image */}
                 <View style={styles.imageContainer}>
                     {hasImage ? (
                         <>
@@ -59,7 +117,7 @@ const EventView: React.FC<{ event: IEvent; onClose: () => void }> = ({ event, on
 
                 {!hasImage && <Text style={styles.locationName}>{event.titulo}</Text>}
 
-                {/* Cupos badge */}
+                {/* Disponibilidad */}
                 <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
                     <View style={[styles.infoCard, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}>
                         <Text style={[styles.infoText, { fontWeight: "600", color: "#202124" }]}>Disponibilidad</Text>
@@ -70,6 +128,19 @@ const EventView: React.FC<{ event: IEvent; onClose: () => void }> = ({ event, on
                         </View>
                     </View>
                 </View>
+
+                {/* Espacio del evento */}
+                {espacio && (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <View style={styles.sectionIconWrap}>
+                                <MaterialCommunityIcons name="door-open" size={18} color={ACCENT} />
+                            </View>
+                            <Text style={styles.sectionTitle}>Espacio / Salón</Text>
+                        </View>
+                        <EspacioCard espacio={espacio} />
+                    </View>
+                )}
 
                 {/* Descripción */}
                 {event.descripcion && (
@@ -100,8 +171,7 @@ const EventView: React.FC<{ event: IEvent; onClose: () => void }> = ({ event, on
                             <Text style={styles.infoText}>
                                 {isSameDay
                                     ? formatDate(event.fechaInicio)
-                                    : `${formatDate(event.fechaInicio)} — ${formatDate(event.fechaFin)}`
-                                }
+                                    : `${formatDate(event.fechaInicio)} — ${formatDate(event.fechaFin)}`}
                             </Text>
                         </View>
                     </View>
@@ -132,6 +202,7 @@ const LocationView: React.FC<{ location: IDestino; onClose: () => void }> = ({ l
     const [imgError, setImgError] = React.useState(false);
     const imageUrl = buildImageUrl(location.image);
     const hasImage = !!imageUrl && !imgError;
+    const tieneEspacios = location.espacios && location.espacios.length > 0;
 
     return (
         <View style={styles.container}>
@@ -161,6 +232,7 @@ const LocationView: React.FC<{ location: IDestino; onClose: () => void }> = ({ l
 
                 {!hasImage && <Text style={styles.locationName}>{location.nombre}</Text>}
 
+                {/* Coordenadas */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={styles.sectionIconWrap}>
@@ -175,6 +247,26 @@ const LocationView: React.FC<{ location: IDestino; onClose: () => void }> = ({ l
                     </View>
                 </View>
 
+                {/* Espacios del destino */}
+                {tieneEspacios && (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <View style={styles.sectionIconWrap}>
+                                <MaterialCommunityIcons name="door-open" size={18} color={ACCENT} />
+                            </View>
+                            <Text style={styles.sectionTitle}>
+                                Espacios ({location.espacios!.length})
+                            </Text>
+                        </View>
+                        <View style={{ gap: 8 }}>
+                            {location.espacios!.map((esp) => (
+                                <EspacioCard key={esp._id} espacio={esp} />
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Ruta pregrabada */}
                 {location.rutaPregrabada && (
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
@@ -204,10 +296,8 @@ const LocationView: React.FC<{ location: IDestino; onClose: () => void }> = ({ l
 const PersonView: React.FC<{ person: IPersonal; onClose: () => void }> = ({ person, onClose }) => {
     const nombreCompleto = [person.nombre, person.apellidoPaterno, person.apellidoMaterno]
         .filter(Boolean).join(" ");
-
     const initials = [person.nombre, person.apellidoPaterno]
-        .map(v => (v ?? "").charAt(0))
-        .join("").toUpperCase() || "?";
+        .map(v => (v ?? "").charAt(0)).join("").toUpperCase() || "?";
 
     return (
         <View style={styles.container}>
@@ -366,4 +456,60 @@ const styles = StyleSheet.create({
         shadowColor: ACCENT, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
     },
     actionBtnText: { fontSize: 15, fontWeight: "700", color: "#fff" },
+});
+
+const localInfoStyles = StyleSheet.create({
+    // Planta badge
+    plantaBadge: {
+        backgroundColor: "#EAF1FB", borderRadius: 8,
+        paddingHorizontal: 8, paddingVertical: 3,
+        flexShrink: 0,  // nunca se encoge
+    },
+    plantaBadgeText: { fontSize: 11, fontWeight: "700", color: ACCENT },
+
+    // EspacioCard container
+    espacioCard: {
+        backgroundColor: "#F8F9FA", borderRadius: 14,
+        padding: 14, gap: 10,
+    },
+
+    // Fila superior: icono + nombre (flex:1 para truncar) + badge planta
+    espacioHeaderRow: {
+        flexDirection: "row", alignItems: "center",
+        gap: 6,
+    },
+    espacioNombre: {
+        flex: 1,  // ocupa espacio sobrante y trunca
+        fontSize: 14, fontWeight: "700", color: "#202124",
+    },
+
+    // Fila genérica con icono + texto
+    espacioRow: {
+        flexDirection: "row", alignItems: "flex-start", gap: 6,
+    },
+    espacioDesc: {
+        flex: 1, fontSize: 13, color: "#9AA0A6", lineHeight: 18,
+    },
+    espacioCupos: {
+        fontSize: 13, color: "#5F6368",
+    },
+
+    // Fila inferior: cupos a la izquierda, badge a la derecha
+    espacioFooterRow: {
+        flexDirection: "row", alignItems: "center",
+        justifyContent: "space-between",
+    },
+
+    // Badge ocupado/disponible con punto de color
+    statusBadge: {
+        flexDirection: "row", alignItems: "center", gap: 5,
+        borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
+        flexShrink: 0,
+    },
+    statusDot: {
+        width: 7, height: 7, borderRadius: 4,
+    },
+    statusText: {
+        fontSize: 12, fontWeight: "700",
+    },
 });
