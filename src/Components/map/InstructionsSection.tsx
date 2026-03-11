@@ -20,14 +20,14 @@ interface InstructionsSectionProps {
 }
 
 const MANEUVER_ICONS: Record<string, { name: string; color: string; bg: string }> = {
-    "turn-right":        { name: "arrow-forward",      color: "#1A73E8", bg: "#EAF1FB" },
-    "turn-left":         { name: "arrow-back",         color: "#1A73E8", bg: "#EAF1FB" },
+    "turn-right":        { name: "arrow-forward",      color: "#003366", bg: "#EAF1FB" },
+    "turn-left":         { name: "arrow-back",         color: "#003366", bg: "#EAF1FB" },
     "turn-slight-right": { name: "trending-up",        color: "#34A853", bg: "#E8F5E9" },
     "turn-slight-left":  { name: "trending-down",      color: "#34A853", bg: "#E8F5E9" },
     "turn-sharp-right":  { name: "return-up-forward",  color: "#F57C00", bg: "#FFF3E0" },
     "turn-sharp-left":   { name: "return-up-back",     color: "#F57C00", bg: "#FFF3E0" },
-    "keep-right":        { name: "arrow-forward",      color: "#1A73E8", bg: "#EAF1FB" },
-    "keep-left":         { name: "arrow-back",         color: "#1A73E8", bg: "#EAF1FB" },
+    "keep-right":        { name: "arrow-forward",      color: "#003366", bg: "#EAF1FB" },
+    "keep-left":         { name: "arrow-back",         color: "#003366", bg: "#EAF1FB" },
     "uturn-right":       { name: "return-down-forward",color: "#EA4335", bg: "#FDEEEC" },
     "uturn-left":        { name: "return-down-back",   color: "#EA4335", bg: "#FDEEEC" },
     "straight":          { name: "arrow-up",           color: "#5F6368", bg: "#F1F3F4" },

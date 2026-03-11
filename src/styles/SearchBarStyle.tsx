@@ -63,7 +63,7 @@ export const searchBarStyle = StyleSheet.create({
         elevation: 3,
     },
     chipActive: {
-        backgroundColor: "#1A73E8",
+        backgroundColor: "#003366",
     },
     chipLabel: {
         fontSize: 12,

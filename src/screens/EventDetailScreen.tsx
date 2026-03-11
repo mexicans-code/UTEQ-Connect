@@ -24,7 +24,7 @@ import { useCallback } from 'react';
 type EventDetailRouteProp = RouteProp<EventsStackParamList, 'EventDetail'>;
 type EventDetailNavigationProp = StackNavigationProp<EventsStackParamList, 'EventDetail'>;
 
-const ACCENT = '#1A73E8';
+const ACCENT = '#003366';
 
 const EventDetailScreen = () => {
   const [userId, setUserId] = useState<string | null>(null);

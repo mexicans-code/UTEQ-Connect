@@ -139,7 +139,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             return (
                 <TouchableOpacity style={rowStyle} onPress={() => handleSelect(item)} activeOpacity={0.7}>
                     <View style={[styles.resultIconWrap, { backgroundColor: "#EAF1FB" }]}>
-                        <MaterialIcons name="place" size={17} color="#1A73E8" />
+                        <MaterialIcons name="place" size={17} color="#003366" />
                     </View>
                     <View style={styles.resultText}>
                         <Text style={styles.resultTitle} numberOfLines={1}>{item.data.nombre}</Text>
@@ -195,7 +195,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     return (
         <View style={styles.wrapper} pointerEvents="box-none">
             <Animated.View style={[styles.searchPill, shadowStyle]}>
-                <Ionicons name="search" size={19} color={isFocused ? "#1A73E8" : "#9AA0A6"} style={styles.searchIcon} />
+                <Ionicons name="search" size={19} color={isFocused ? "#003366" : "#9AA0A6"} style={styles.searchIcon} />
                 <TextInput
                     ref={inputRef}
                     style={styles.input}
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
         shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
     },
-    chipActive: { backgroundColor: "#1A73E8" },
+    chipActive: { backgroundColor: "#003366" },
     chipLabel: { fontSize: 12, fontWeight: "600", color: "#5F6368" },
     chipLabelActive: { color: "#fff" },
     dropdown: {

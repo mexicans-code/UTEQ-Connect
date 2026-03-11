@@ -2,7 +2,7 @@
 export interface IEspacio {
     _id: string;
     nombre: string;
-    destino: string | IDestino;
+    destino?: string | IDestino;
     cupos: number;
     ocupado: boolean;
     planta: "alta" | "baja" | "única";

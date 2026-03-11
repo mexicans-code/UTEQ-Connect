@@ -1,6 +1,6 @@
 import { StyleSheet, Platform } from "react-native";
 
-export const ACCENT = "#1A73E8";
+export const ACCENT = "#003366";
 export const GREEN  = "#34A853";
 
 export const routeInfoSheetStyles = StyleSheet.create({

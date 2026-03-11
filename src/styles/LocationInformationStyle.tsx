@@ -1,7 +1,7 @@
 import { StyleSheet, Platform } from "react-native";
 
 export const CARD_RADIUS = 28;
-export const ACCENT = "#1A73E8";
+export const ACCENT = "#003366";
 export const PLACEHOLDER_COLOR = "#E8EAED";
 
 export const locationInformationStyle = StyleSheet.create({

@@ -4,7 +4,7 @@ import { Ionicons, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-ic
 import { IDestino, IPersonal, IEvent, IEspacio } from "../../types/search.types";
 import { buildImageUrl } from "../../utils/imageUrl";
 
-const ACCENT = "#1A73E8";
+const ACCENT = "#003366";
 
 interface LocationInformationProps {
     location?: IDestino | null;
