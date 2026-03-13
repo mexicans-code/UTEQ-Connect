@@ -5,13 +5,17 @@ export interface Coordinates {
     longitude: number;
 }
 
+// ==================== LOCATION ====================
+
 export interface Location {
     _id: string;
     nombre: string;
-    posicion: Coordinates;
-    personData?: PersonData;
+    posicion: {
+        latitude: number;
+        longitude: number;
+    };
 
-    // Propiedades opcionales para lugares
+    // ── Optional place fields ──────────────────────────
     direccion?: string;
     telefono?: string;
     horario?: string;
@@ -22,7 +26,7 @@ export interface Location {
     tipo?: string;
     fotos?: string[];
 
-    // Propiedades opcionales para personas
+    // ── Person fields (isPerson = true) ───────────────
     isPerson?: boolean;
     numeroEmpleado?: string;
     nombreCompleto?: string;
@@ -31,7 +35,26 @@ export interface Location {
     departamento?: string;
     cubiculo?: string;
     planta?: string;
+
+    // ── Event fields (isEvent = true) ─────────────────
+    isEvent?: boolean;
+    eventId?: string;
+    eventTitulo?: string;
+    eventDescripcion?: string;
+    eventFechaInicio?: string;
+    eventFechaFin?: string;
+    eventHoraInicio?: string;
+    eventHoraFin?: string;
+    eventCupos?: number;
+    eventCuposDisponibles?: number;
+    eventActivo?: boolean;
+    eventImage?: string;
+    eventEspacioNombre?: string;
+    eventEncargado?: string;
+    eventEncargadoEmail?: string;
 }
+
+// ==================== ROUTE INFO ====================
 
 export interface RouteInfo {
     distancia: string;
@@ -39,6 +62,8 @@ export interface RouteInfo {
     distanciaValor: number;
     duracionValor: number;
 }
+
+// ==================== PERSON DATA ====================
 
 export interface PersonData {
     numeroEmpleado: string;
@@ -49,36 +74,6 @@ export interface PersonData {
     departamento: string;
     cubiculo?: string;
     planta?: string;
-}
-
-// ==================== LOCATION ====================
-
-export interface Location {
-    _id: string;
-    nombre: string;
-    posicion: {
-        latitude: number;
-        longitude: number;
-    };
-    // Optional person fields — populated when selected via person search
-    isPerson?: boolean;
-    numeroEmpleado?: string;
-    nombreCompleto?: string;
-    email?: string;
-    telefono?: string;
-    cargo?: string;
-    departamento?: string;
-    cubiculo?: string;
-    planta?: string;
-}
-
-// ==================== ROUTE INFO ====================
-
-export interface RouteInfo {
-    distancia: string;
-    duracion: string;
-    distanciaValor: number;
-    duracionValor: number;
 }
 
 // ==================== PERSONAL (from API) ====================
@@ -102,10 +97,7 @@ export interface PersonalConUbicacion {
     departamento: string;
     ubicacion: {
         nombre: string;
-        coordenadas: {
-            latitude: number;
-            longitude: number;
-        };
+        coordenadas: { latitude: number; longitude: number };
         id: string;
     } | null;
     personal: Array<{
@@ -136,10 +128,7 @@ export interface ProfesorConUbicacion {
     };
     ubicacion: {
         nombre: string;
-        coordenadas: {
-            latitude: number;
-            longitude: number;
-        };
+        coordenadas: { latitude: number; longitude: number };
         id: string;
         comoLlegar: string;
     } | null;

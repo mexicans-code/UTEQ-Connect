@@ -8,44 +8,41 @@ import SearchBar from "./SearchBar";
 import { Location as LocationType, RouteInfo, Coordinates, PersonData } from "../../types";
 import { GOOGLE_MAPS_API_KEY } from "../../config/maps";
 import { decodePolyline } from "../../utils/polyline";
-import { calcularDistancia, estaFueraDeRuta } from "../../utils/geoUtils";
+import { estaFueraDeRuta } from "../../utils/geoUtils";
 import RouteInfoSheet from "./RouteInfoSheet";
 
 const UTEQ_COORDS: Coordinates = {
     latitude: 20.65398463798,
-    longitude: -100.40607234656
+    longitude: -100.40607234656,
 };
 
 const INITIAL_REGION: Region = {
-    latitude: UTEQ_COORDS.latitude,
-    longitude: UTEQ_COORDS.longitude,
+    ...UTEQ_COORDS,
     latitudeDelta: 0.01,
-    longitudeDelta: 0.01
+    longitudeDelta: 0.01,
 };
 
 const MapViewContainer = () => {
-    const [searchText, setSearchText] = useState("");
+    const [searchText, setSearchText]           = useState("");
     const [selectedLocation, setSelectedLocation] = useState<LocationType | null>(null);
-    const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
+    const [currentLocation, setCurrentLocation]   = useState<Coordinates | null>(null);
     const [routeCoordinates, setRouteCoordinates] = useState<Coordinates[]>([]);
-    const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
-    const [loadingLocation, setLoadingLocation] = useState(true);
-    const [isNavigating, setIsNavigating] = useState(false);
-    const [recalculando, setRecalculando] = useState(false);
+    const [routeInfo, setRouteInfo]               = useState<RouteInfo | null>(null);
+    const [loadingLocation, setLoadingLocation]   = useState(true);
+    const [isNavigating, setIsNavigating]         = useState(false);
+    const [recalculando, setRecalculando]         = useState(false);
 
-    const mapRef = useRef<MapView>(null);
-    const regionRef = useRef<Region>(INITIAL_REGION);
-    const locationSubscription = useRef<Location.LocationSubscription | null>(null);
-    const lastRecalculationTime = useRef<number>(0);
+    const mapRef                  = useRef<MapView>(null);
+    const regionRef               = useRef<Region>(INITIAL_REGION);
+    const locationSubscription    = useRef<Location.LocationSubscription | null>(null);
+    const lastRecalculationTime   = useRef<number>(0);
 
     useEffect(() => {
         obtenerUbicacionActual();
-        return () => {
-            if (locationSubscription.current) {
-                locationSubscription.current.remove();
-            }
-        };
+        return () => { locationSubscription.current?.remove(); };
     }, []);
+
+    // ── GPS ────────────────────────────────────────────────────────────────────
 
     const obtenerUbicacionActual = async () => {
         try {
@@ -54,43 +51,25 @@ const MapViewContainer = () => {
 
             if (USE_TESTING_LOCATION) {
                 setCurrentLocation(UTEQ_COORDS);
-                mapRef.current?.animateToRegion({
-                    latitude: UTEQ_COORDS.latitude,
-                    longitude: UTEQ_COORDS.longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                }, 1000);
+                mapRef.current?.animateToRegion({ ...UTEQ_COORDS, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 1000);
                 setLoadingLocation(false);
                 return;
             }
 
             const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permiso denegado', 'Necesitamos acceso a tu ubicación para calcular rutas.');
+            if (status !== "granted") {
+                Alert.alert("Permiso denegado", "Necesitamos acceso a tu ubicación.");
                 setLoadingLocation(false);
                 return;
             }
 
-            const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
-            });
-
-            const coords: Coordinates = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            };
-
+            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+            const coords: Coordinates = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
             setCurrentLocation(coords);
-            mapRef.current?.animateToRegion({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 1000);
-
-        } catch (error) {
-            console.error('Error obteniendo ubicación:', error);
-            Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+            mapRef.current?.animateToRegion({ ...coords, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 1000);
+        } catch (e) {
+            console.error("Error obteniendo ubicación:", e);
+            Alert.alert("Error", "No se pudo obtener tu ubicación actual");
         } finally {
             setLoadingLocation(false);
         }
@@ -99,148 +78,103 @@ const MapViewContainer = () => {
     const iniciarTrackingGPS = async () => {
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') return;
-
-            if (locationSubscription.current) {
-                locationSubscription.current.remove();
-            }
+            if (status !== "granted") return;
+            locationSubscription.current?.remove();
 
             locationSubscription.current = await Location.watchPositionAsync(
-                {
-                    accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 3000,
-                    distanceInterval: 10,
-                },
-                (location) => {
-                    const nuevaUbicacion: Coordinates = {
-                        latitude: location.coords.latitude,
-                        longitude: location.coords.longitude,
-                    };
-
-                    setCurrentLocation(nuevaUbicacion);
+                { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 3000, distanceInterval: 10 },
+                (loc) => {
+                    const nueva: Coordinates = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+                    setCurrentLocation(nueva);
 
                     if (mapRef.current && isNavigating) {
-                        mapRef.current.animateToRegion({
-                            latitude: nuevaUbicacion.latitude,
-                            longitude: nuevaUbicacion.longitude,
-                            latitudeDelta: 0.005,
-                            longitudeDelta: 0.005,
-                        }, 500);
+                        mapRef.current.animateToRegion({ ...nueva, latitudeDelta: 0.005, longitudeDelta: 0.005 }, 500);
                     }
-
                     if (isNavigating && routeCoordinates.length > 0 && selectedLocation) {
-                        verificarDesvio(nuevaUbicacion);
+                        verificarDesvio(nueva);
                     }
                 }
             );
-        } catch (error) {
-            console.error('Error iniciando tracking:', error);
+        } catch (e) {
+            console.error("Error iniciando tracking:", e);
         }
     };
 
     const detenerTrackingGPS = () => {
-        if (locationSubscription.current) {
-            locationSubscription.current.remove();
-            locationSubscription.current = null;
+        locationSubscription.current?.remove();
+        locationSubscription.current = null;
+    };
+
+    const verificarDesvio = (ubicacion: Coordinates) => {
+        const UMBRAL = 50;
+        const MIN_RECALCULO = 10000;
+        const ahora = Date.now();
+        if (recalculando || ahora - lastRecalculationTime.current < MIN_RECALCULO) return;
+
+        if (estaFueraDeRuta(ubicacion, routeCoordinates, UMBRAL) && selectedLocation) {
+            Alert.alert("Desvío detectado", "Recalculando ruta...", [{ text: "OK" }], { cancelable: true });
+            lastRecalculationTime.current = ahora;
+            calcularRuta(ubicacion, selectedLocation.posicion);
         }
     };
 
-    const verificarDesvio = (ubicacionActual: Coordinates) => {
-        const UMBRAL_DESVIO = 50;
-        const TIEMPO_MIN_RECALCULO = 10000;
-        const ahoraMs = Date.now();
+    // ── Route ──────────────────────────────────────────────────────────────────
 
-        if (recalculando || (ahoraMs - lastRecalculationTime.current) < TIEMPO_MIN_RECALCULO) return;
-
-        const fueraDeRuta = estaFueraDeRuta(ubicacionActual, routeCoordinates, UMBRAL_DESVIO);
-        if (fueraDeRuta && selectedLocation) {
-            Alert.alert('Desvío detectado', 'Recalculando ruta...', [{ text: 'OK' }], { cancelable: true });
-            lastRecalculationTime.current = ahoraMs;
-            calcularRuta(ubicacionActual, selectedLocation.posicion);
-        }
-    };
-
-    const calcularRuta = async (origenCoords: Coordinates, destinoCoords: Coordinates) => {
-        if (!origenCoords || !destinoCoords) return;
-
+    const calcularRuta = async (origen: Coordinates, destino: Coordinates) => {
         try {
             setRecalculando(true);
 
-            if (!origenCoords.latitude || !origenCoords.longitude ||
-                !destinoCoords.latitude || !destinoCoords.longitude) {
-                throw new Error('Coordenadas inválidas');
-            }
-
             const params = new URLSearchParams({
-                origin: `${origenCoords.latitude},${origenCoords.longitude}`,
-                destination: `${destinoCoords.latitude},${destinoCoords.longitude}`,
-                key: GOOGLE_MAPS_API_KEY,
-                language: 'es',
-                alternatives: 'true',
-                units: 'metric',
-                region: 'mx',
-                mode: 'walking',
+                origin:       `${origen.latitude},${origen.longitude}`,
+                destination:  `${destino.latitude},${destino.longitude}`,
+                key:          GOOGLE_MAPS_API_KEY,
+                language:     "es",
+                alternatives: "true",
+                units:        "metric",
+                region:       "mx",
+                mode:         "walking",
             });
 
             const response = await axios.get(
-                `https://maps.googleapis.com/maps/api/directions/json?${params.toString()}`,
+                `https://maps.googleapis.com/maps/api/directions/json?${params}`,
                 { timeout: 10000 }
             );
 
-            if (response.data.status === 'OK' && response.data.routes.length) {
-                let bestRoute = response.data.routes[0];
-
-                if (response.data.routes.length > 1) {
-                    bestRoute = response.data.routes.reduce((mejor: any, actual: any) => {
-                        return actual.legs[0].duration.value < mejor.legs[0].duration.value ? actual : mejor;
-                    });
-                }
-
-                const leg = bestRoute.legs[0];
-                if (!leg || !bestRoute.overview_polyline?.points) throw new Error('Datos de ruta incompletos');
-
-                const points = decodePolyline(bestRoute.overview_polyline.points);
-                const validPoints = points.filter(point =>
-                    point.latitude && point.longitude &&
-                    !isNaN(point.latitude) && !isNaN(point.longitude) &&
-                    Math.abs(point.latitude) <= 90 && Math.abs(point.longitude) <= 180
+            if (response.data.status === "OK" && response.data.routes.length) {
+                const bestRoute = response.data.routes.reduce((best: any, r: any) =>
+                    r.legs[0].duration.value < best.legs[0].duration.value ? r : best
                 );
 
-                if (validPoints.length === 0) throw new Error('Puntos de ruta inválidos');
+                const leg = bestRoute.legs[0];
+                if (!leg || !bestRoute.overview_polyline?.points) throw new Error("Datos de ruta incompletos");
 
-                setRouteCoordinates(validPoints);
+                const points = decodePolyline(bestRoute.overview_polyline.points).filter(
+                    (p) => p.latitude && p.longitude && !isNaN(p.latitude) && !isNaN(p.longitude) &&
+                           Math.abs(p.latitude) <= 90 && Math.abs(p.longitude) <= 180
+                );
 
-                const rutaInfo: RouteInfo = {
-                    distancia: leg.distance?.text || 'No disponible',
-                    duracion: leg.duration?.text || 'No disponible',
+                if (!points.length) throw new Error("Puntos de ruta inválidos");
+
+                setRouteCoordinates(points);
+                setRouteInfo({
+                    distancia:      leg.distance?.text  || "No disponible",
+                    duracion:       leg.duration?.text  || "No disponible",
                     distanciaValor: leg.distance?.value || 0,
-                    duracionValor: leg.duration?.value || 0,
-                };
+                    duracionValor:  leg.duration?.value || 0,
+                });
 
-                setRouteInfo(rutaInfo);
-
-                if (mapRef.current) {
-                    mapRef.current.fitToCoordinates([
-                        origenCoords,
-                        ...validPoints.slice(0, Math.min(validPoints.length, 100)),
-                        destinoCoords
-                    ], {
-                        edgePadding: { top: 120, right: 80, bottom: 280, left: 80 },
-                        animated: true,
-                    });
-                }
-
-                console.log('✅ Ruta calculada:', rutaInfo.distancia, rutaInfo.duracion);
-
+                mapRef.current?.fitToCoordinates(
+                    [origen, ...points.slice(0, 100), destino],
+                    { edgePadding: { top: 120, right: 80, bottom: 280, left: 80 }, animated: true }
+                );
             } else {
                 Alert.alert("Ruta no encontrada", "No se pudo encontrar una ruta.");
                 setRouteCoordinates([]);
                 setRouteInfo(null);
             }
-
-        } catch (error: any) {
-            console.error("Error al calcular ruta:", error);
-            Alert.alert("Error", "No se pudo calcular la ruta: " + error.message);
+        } catch (e: any) {
+            console.error("Error al calcular ruta:", e);
+            Alert.alert("Error", "No se pudo calcular la ruta: " + e.message);
             setRouteCoordinates([]);
             setRouteInfo(null);
         } finally {
@@ -248,48 +182,55 @@ const MapViewContainer = () => {
         }
     };
 
-    const handleLocationSelect = (location: LocationType, personData?: PersonData) => {
-        console.log('📍 Location selected:', location.nombre);
+    // ── Handlers ───────────────────────────────────────────────────────────────
 
-        let locationToSave: LocationType = { ...location };
+    /**
+     * Único handler para los tres tipos (lugar / persona / evento).
+     *
+     * - Si viene personData → enriquece el location con isPerson = true
+     * - Si el location ya trae isEvent = true (lo pone SearchBar) → se guarda tal cual
+     * - En ningún caso se sobreescribe isEvent con isPerson ni viceversa
+     */
+    const handleLocationSelect = (location: LocationType, personData?: PersonData) => {
+        let locationToSave: LocationType;
 
         if (personData) {
-            console.log('✅ Person data received:', personData.nombreCompleto);
+            // Persona: añadir datos del empleado
             locationToSave = {
                 ...location,
-                isPerson: true,
+                isPerson:       true,
                 numeroEmpleado: personData.numeroEmpleado,
                 nombreCompleto: personData.nombreCompleto,
-                email: personData.email,
-                telefono: personData.telefono,
-                cargo: personData.cargo,
-                departamento: personData.departamento,
-                cubiculo: personData.cubiculo,
-                planta: personData.planta,
+                email:          personData.email,
+                telefono:       personData.telefono,
+                cargo:          personData.cargo,
+                departamento:   personData.departamento,
+                cubiculo:       personData.cubiculo,
+                planta:         personData.planta,
             };
+        } else {
+            // Lugar estándar O evento — el location llega ya completo desde SearchBar
+            locationToSave = { ...location };
         }
 
-        console.log('💾 Saving to state, isPerson:', locationToSave.isPerson);
         setSelectedLocation(locationToSave);
 
-        mapRef.current?.animateToRegion({
-            latitude: location.posicion.latitude,
-            longitude: location.posicion.longitude,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-        }, 500);
+        mapRef.current?.animateToRegion(
+            { ...location.posicion, latitudeDelta: 0.005, longitudeDelta: 0.005 },
+            500
+        );
 
         if (currentLocation) {
             calcularRuta(currentLocation, location.posicion);
         } else {
-            Alert.alert('Esperando ubicación', 'Obteniendo tu ubicación actual...');
+            Alert.alert("Esperando ubicación", "Obteniendo tu ubicación actual...");
         }
     };
 
     const handleStartNavigation = () => {
         setIsNavigating(true);
         iniciarTrackingGPS();
-        Alert.alert('Navegación iniciada', 'Se recalculará automáticamente si te desvías.');
+        Alert.alert("Navegación iniciada", "Se recalculará automáticamente si te desvías.");
     };
 
     const handleCloseRoute = () => {
@@ -301,25 +242,38 @@ const MapViewContainer = () => {
         detenerTrackingGPS();
 
         if (currentLocation && mapRef.current) {
-            mapRef.current.animateToRegion({
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 500);
+            mapRef.current.animateToRegion(
+                { ...currentLocation, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+                500
+            );
         }
     };
 
-    // DEBUG — quitar después
-    console.log('🗺️ render — selectedLocation isPerson:', selectedLocation?.isPerson);
+    // ── Render ─────────────────────────────────────────────────────────────────
 
     if (loadingLocation) {
         return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+            <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
                 <ActivityIndicator size="large" color="#4285F4" />
             </View>
         );
     }
+
+    const markerPinColor = selectedLocation?.isEvent
+        ? "orange"
+        : selectedLocation?.isPerson
+            ? "red"
+            : "red";
+
+    const markerTitle = selectedLocation?.isEvent
+        ? selectedLocation.eventTitulo
+        : selectedLocation?.nombre;
+
+    const markerDescription = selectedLocation?.isEvent
+        ? `${selectedLocation.eventHoraInicio}–${selectedLocation.eventHoraFin}`
+        : selectedLocation?.isPerson
+            ? selectedLocation.cargo
+            : undefined;
 
     return (
         <View style={styles.container}>
@@ -327,9 +281,9 @@ const MapViewContainer = () => {
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={INITIAL_REGION}
-                showsUserLocation={true}
+                showsUserLocation
                 mapType="hybrid"
-                showsMyLocationButton={true}
+                showsMyLocationButton
                 followsUserLocation={isNavigating}
                 onRegionChangeComplete={(r) => { regionRef.current = r; }}
             >
@@ -344,12 +298,10 @@ const MapViewContainer = () => {
 
                 {selectedLocation && (
                     <Marker
-                        coordinate={{
-                            latitude: selectedLocation.posicion.latitude,
-                            longitude: selectedLocation.posicion.longitude,
-                        }}
-                        title={selectedLocation.nombre}
-                        pinColor="red"
+                        coordinate={selectedLocation.posicion}
+                        title={markerTitle}
+                        description={markerDescription}
+                        pinColor={markerPinColor}
                     />
                 )}
 
