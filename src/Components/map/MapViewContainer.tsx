@@ -5,7 +5,7 @@ import * as Location from 'expo-location';
 import axios from "axios";
 import styles from "../../styles/MapViewStyle";
 import SearchBar from "./SearchBar";
-import { Location as LocationType, RouteInfo, Coordinates } from "../../types";
+import { Location as LocationType, RouteInfo, Coordinates, PersonData } from "../../types";
 import { GOOGLE_MAPS_API_KEY } from "../../config/maps";
 import { decodePolyline } from "../../utils/polyline";
 import { calcularDistancia, estaFueraDeRuta } from "../../utils/geoUtils";
@@ -31,13 +31,13 @@ const MapViewContainer = () => {
     const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
     const [loadingLocation, setLoadingLocation] = useState(true);
     const [isNavigating, setIsNavigating] = useState(false);
-
     const [recalculando, setRecalculando] = useState(false);
 
     const mapRef = useRef<MapView>(null);
     const regionRef = useRef<Region>(INITIAL_REGION);
     const locationSubscription = useRef<Location.LocationSubscription | null>(null);
     const lastRecalculationTime = useRef<number>(0);
+
     useEffect(() => {
         obtenerUbicacionActual();
         return () => {
@@ -50,31 +50,23 @@ const MapViewContainer = () => {
     const obtenerUbicacionActual = async () => {
         try {
             setLoadingLocation(true);
-
-            const USE_TESTING_LOCATION = false;
+            const USE_TESTING_LOCATION = true;
 
             if (USE_TESTING_LOCATION) {
                 setCurrentLocation(UTEQ_COORDS);
-
-                const newRegion: Region = {
+                mapRef.current?.animateToRegion({
                     latitude: UTEQ_COORDS.latitude,
                     longitude: UTEQ_COORDS.longitude,
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
-                };
-
-                mapRef.current?.animateToRegion(newRegion, 1000);
+                }, 1000);
                 setLoadingLocation(false);
                 return;
             }
 
             const { status } = await Location.requestForegroundPermissionsAsync();
-
             if (status !== 'granted') {
-                Alert.alert(
-                    'Permiso denegado',
-                    'Necesitamos acceso a tu ubicación para calcular rutas.'
-                );
+                Alert.alert('Permiso denegado', 'Necesitamos acceso a tu ubicación para calcular rutas.');
                 setLoadingLocation(false);
                 return;
             }
@@ -89,15 +81,12 @@ const MapViewContainer = () => {
             };
 
             setCurrentLocation(coords);
-
-            const newRegion: Region = {
+            mapRef.current?.animateToRegion({
                 latitude: coords.latitude,
                 longitude: coords.longitude,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
-            };
-
-            mapRef.current?.animateToRegion(newRegion, 1000);
+            }, 1000);
 
         } catch (error) {
             console.error('Error obteniendo ubicación:', error);
@@ -159,33 +148,20 @@ const MapViewContainer = () => {
     const verificarDesvio = (ubicacionActual: Coordinates) => {
         const UMBRAL_DESVIO = 50;
         const TIEMPO_MIN_RECALCULO = 10000;
-
         const ahoraMs = Date.now();
-        const tiempoDesdeUltimoRecalculo = ahoraMs - lastRecalculationTime.current;
 
-        if (recalculando || tiempoDesdeUltimoRecalculo < TIEMPO_MIN_RECALCULO) {
-            return;
-        }
+        if (recalculando || (ahoraMs - lastRecalculationTime.current) < TIEMPO_MIN_RECALCULO) return;
 
         const fueraDeRuta = estaFueraDeRuta(ubicacionActual, routeCoordinates, UMBRAL_DESVIO);
-
         if (fueraDeRuta && selectedLocation) {
-            Alert.alert(
-                'Desvío detectado',
-                'Recalculando ruta...',
-                [{ text: 'OK' }],
-                { cancelable: true }
-            );
-
+            Alert.alert('Desvío detectado', 'Recalculando ruta...', [{ text: 'OK' }], { cancelable: true });
             lastRecalculationTime.current = ahoraMs;
             calcularRuta(ubicacionActual, selectedLocation.posicion);
         }
     };
 
     const calcularRuta = async (origenCoords: Coordinates, destinoCoords: Coordinates) => {
-        if (!origenCoords || !destinoCoords) {
-            return;
-        }
+        if (!origenCoords || !destinoCoords) return;
 
         try {
             setRecalculando(true);
@@ -215,65 +191,46 @@ const MapViewContainer = () => {
                 let bestRoute = response.data.routes[0];
 
                 if (response.data.routes.length > 1) {
-                    bestRoute = response.data.routes.reduce((mejor, actual) => {
-                        const duracionMejor = mejor.legs[0].duration.value;
-                        const duracionActual = actual.legs[0].duration.value;
-                        return duracionActual < duracionMejor ? actual : mejor;
+                    bestRoute = response.data.routes.reduce((mejor: any, actual: any) => {
+                        return actual.legs[0].duration.value < mejor.legs[0].duration.value ? actual : mejor;
                     });
                 }
 
                 const leg = bestRoute.legs[0];
-
-                if (!leg || !bestRoute.overview_polyline?.points) {
-                    throw new Error('Datos de ruta incompletos');
-                }
+                if (!leg || !bestRoute.overview_polyline?.points) throw new Error('Datos de ruta incompletos');
 
                 const points = decodePolyline(bestRoute.overview_polyline.points);
-
                 const validPoints = points.filter(point =>
                     point.latitude && point.longitude &&
                     !isNaN(point.latitude) && !isNaN(point.longitude) &&
                     Math.abs(point.latitude) <= 90 && Math.abs(point.longitude) <= 180
                 );
 
-                if (validPoints.length === 0) {
-                    throw new Error('Puntos de ruta inválidos');
-                }
+                if (validPoints.length === 0) throw new Error('Puntos de ruta inválidos');
 
                 setRouteCoordinates(validPoints);
 
-                const rutaInfoMejorada: RouteInfo = {
+                const rutaInfo: RouteInfo = {
                     distancia: leg.distance?.text || 'No disponible',
                     duracion: leg.duration?.text || 'No disponible',
                     distanciaValor: leg.distance?.value || 0,
                     duracionValor: leg.duration?.value || 0,
                 };
 
-                setRouteInfo(rutaInfoMejorada);
+                setRouteInfo(rutaInfo);
 
                 if (mapRef.current) {
-                    const coordenadasParaAjuste = [
+                    mapRef.current.fitToCoordinates([
                         origenCoords,
                         ...validPoints.slice(0, Math.min(validPoints.length, 100)),
                         destinoCoords
-                    ];
-
-                    mapRef.current.fitToCoordinates(coordenadasParaAjuste, {
-                        edgePadding: {
-                            top: 120,
-                            right: 80,
-                            bottom: 280,
-                            left: 80
-                        },
+                    ], {
+                        edgePadding: { top: 120, right: 80, bottom: 280, left: 80 },
                         animated: true,
                     });
                 }
 
-                console.log('Ruta calculada:', {
-                    distancia: rutaInfoMejorada.distancia,
-                    duracion: rutaInfoMejorada.duracion,
-                    puntos: validPoints.length,
-                });
+                console.log('✅ Ruta calculada:', rutaInfo.distancia, rutaInfo.duracion);
 
             } else {
                 Alert.alert("Ruta no encontrada", "No se pudo encontrar una ruta.");
@@ -291,17 +248,36 @@ const MapViewContainer = () => {
         }
     };
 
-    const handleLocationSelect = (location: LocationType) => {
-        setSelectedLocation(location);
+    const handleLocationSelect = (location: LocationType, personData?: PersonData) => {
+        console.log('📍 Location selected:', location.nombre);
 
-        const newRegion: Region = {
+        let locationToSave: LocationType = { ...location };
+
+        if (personData) {
+            console.log('✅ Person data received:', personData.nombreCompleto);
+            locationToSave = {
+                ...location,
+                isPerson: true,
+                numeroEmpleado: personData.numeroEmpleado,
+                nombreCompleto: personData.nombreCompleto,
+                email: personData.email,
+                telefono: personData.telefono,
+                cargo: personData.cargo,
+                departamento: personData.departamento,
+                cubiculo: personData.cubiculo,
+                planta: personData.planta,
+            };
+        }
+
+        console.log('💾 Saving to state, isPerson:', locationToSave.isPerson);
+        setSelectedLocation(locationToSave);
+
+        mapRef.current?.animateToRegion({
             latitude: location.posicion.latitude,
             longitude: location.posicion.longitude,
             latitudeDelta: 0.005,
             longitudeDelta: 0.005,
-        };
-
-        mapRef.current?.animateToRegion(newRegion, 500);
+        }, 500);
 
         if (currentLocation) {
             calcularRuta(currentLocation, location.posicion);
@@ -325,15 +301,17 @@ const MapViewContainer = () => {
         detenerTrackingGPS();
 
         if (currentLocation && mapRef.current) {
-            const newRegion: Region = {
+            mapRef.current.animateToRegion({
                 latitude: currentLocation.latitude,
                 longitude: currentLocation.longitude,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
-            };
-            mapRef.current.animateToRegion(newRegion, 500);
+            }, 500);
         }
     };
+
+    // DEBUG — quitar después
+    console.log('🗺️ render — selectedLocation isPerson:', selectedLocation?.isPerson);
 
     if (loadingLocation) {
         return (
@@ -353,9 +331,7 @@ const MapViewContainer = () => {
                 mapType="hybrid"
                 showsMyLocationButton={true}
                 followsUserLocation={isNavigating}
-                onRegionChangeComplete={(r) => {
-                    regionRef.current = r;
-                }}
+                onRegionChangeComplete={(r) => { regionRef.current = r; }}
             >
                 {currentLocation && (
                     <Marker
@@ -395,6 +371,7 @@ const MapViewContainer = () => {
             <RouteInfoSheet
                 routeInfo={routeInfo}
                 destinationName={selectedLocation?.nombre}
+                selectedLocation={selectedLocation}
                 onClose={handleCloseRoute}
                 onStartNavigation={handleStartNavigation}
                 isNavigating={isNavigating}

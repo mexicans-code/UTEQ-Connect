@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+
 import Index from './src/screens/Index';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -10,6 +11,9 @@ import ProfileScreen from './src/screens/ProfileScreen';
 const Stack = createStackNavigator();
 
 export default function App() {
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -20,7 +24,11 @@ export default function App() {
         }}
       >
         <Stack.Screen name="Index" component={Index} />
-        <Stack.Screen name="Login" component={LoginScreen} />
+
+        <Stack.Screen name="Login">
+          {(props) => <LoginScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+        </Stack.Screen>
+
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Map" component={MapScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />

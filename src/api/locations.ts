@@ -1,4 +1,3 @@
-// src/api/locations.ts
 import { API_URL } from './config';
 
 export interface Location {
