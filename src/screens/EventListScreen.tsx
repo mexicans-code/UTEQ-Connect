@@ -51,9 +51,9 @@ const EventsListScreen = () => {
   // Socket.io 👈
   useEffect(() => {
     console.log('Socket: conectando a', API_URL);
-const socket: Socket = io(API_URL.replace('/api', ''), {
-  transports: ['websocket'],
-});
+    const socket: Socket = io(API_URL.replace('/api', ''), {
+      transports: ['websocket'],
+    });
 
     socket.on('connect', () => {
       console.log('Socket: conectado ✅', socket.id);
