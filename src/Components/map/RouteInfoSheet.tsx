@@ -36,40 +36,60 @@ const RouteInfoSheet: React.FC<RouteInfoSheetProps> = ({
 
     // ── Derived labels ─────────────────────────────────────────────────────────
 
+    // Construir nombre completo desde campos separados si nombreCompleto no existe
+    const nombreCompleto =
+        selectedLocation?.nombreCompleto ??
+        `${selectedLocation?.nombre ?? ""} ${selectedLocation?.apellidoPaterno ?? ""} ${selectedLocation?.apellidoMaterno ?? ""}`.trim();
+
     const displayName = isPerson
-        ? selectedLocation.nombreCompleto
+        ? nombreCompleto
         : isEvent
             ? selectedLocation.eventTitulo
-            : (destinationName || "Destino");
+            : destinationName || "Destino";
 
     const displaySubtitle = isPerson
-        ? `${selectedLocation.cargo} · ${selectedLocation.nombre}`
+        ? `${selectedLocation.cargo ?? ""} · ${selectedLocation.edificioNombre ?? selectedLocation.ubicacion?.nombre ?? ""}`
         : isEvent
             ? `${selectedLocation.eventHoraInicio}–${selectedLocation.eventHoraFin} · ${selectedLocation.nombre}`
             : null;
 
     const infoColor = isPerson ? "#E53935" : isEvent ? "#FB8C00" : "#4285F4";
     const infoIcon = isPerson ? "person-circle" : isEvent ? "calendar" : "information-circle";
-    const infoLabel = isPerson ? "Ver información del profesor"
-        : isEvent ? "Ver información del evento"
+    const infoLabel = isPerson
+        ? "Ver información del profesor"
+        : isEvent
+            ? "Ver información del evento"
             : "Información de la ubicación";
     const headerIcon = isPerson ? "person" : isEvent ? "calendar" : "location";
 
     // ── Data shapes for child modals ───────────────────────────────────────────
 
+    console.log('selectedLocation completo:', JSON.stringify(selectedLocation, null, 2));
+
     const personData = isPerson
         ? {
             numeroEmpleado: selectedLocation.numeroEmpleado ?? "",
-            nombreCompleto: selectedLocation.nombreCompleto ?? "",
+            nombreCompleto: nombreCompleto,
             email: selectedLocation.email ?? "",
             telefono: selectedLocation.telefono ?? "",
             cargo: selectedLocation.cargo ?? "",
             departamento: selectedLocation.departamento ?? "",
-            cubiculo: selectedLocation.cubiculo,
-            planta: selectedLocation.planta,
-            ubicacion: {
-                nombre: selectedLocation.nombre,
-                coordenadas: selectedLocation.posicion,
+            cubiculo: selectedLocation.cubiculo ?? null,
+            planta: selectedLocation.planta ?? null,
+
+            // Acceso directo — no anidado para evitar undefined silencioso
+            imagenPerfil: selectedLocation.imagenPerfil ?? null,
+            imagenHorario: selectedLocation.imagenHorario ?? null,
+
+            ubicacion: selectedLocation.ubicacion ?? {
+                nombre:
+                    selectedLocation.edificioNombre ??
+                    selectedLocation.nombre ??
+                    "",
+                coordenadas:
+                    selectedLocation.posicion ??
+                    selectedLocation.coordenadas ??
+                    null,
             },
         }
         : null;
@@ -268,7 +288,7 @@ const RouteInfoSheet: React.FC<RouteInfoSheetProps> = ({
                 </View>
             </View>
 
-            {/* ── Person modal (has its own Modal inside) ────────────────── */}
+            {/* ── Person modal ───────────────────────────────────────────── */}
             <PersonInformation
                 person={personData}
                 visible={showInfo && isPerson}

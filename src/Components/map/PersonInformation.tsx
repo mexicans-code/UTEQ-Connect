@@ -1,31 +1,40 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Linking, Modal } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Linking, Modal, Image } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from "../../styles/PersonInformationStyle";
 
 interface PersonInformationProps {
     person?: {
         numeroEmpleado: string;
-        nombreCompleto: string;
+        nombre?: string;
+        apellidoPaterno?: string;
+        apellidoMaterno?: string;
+        nombreCompleto?: string;
         email: string;
         telefono: string;
         cargo: string;
         departamento: string;
-        cubiculo?: string;
-        planta?: string;
+        cubiculo?: string | null;
+        planta?: string | null;
+        imagenPerfil?: string | null;
+        imagenHorario?: string | null;
         ubicacion?: {
             nombre: string;
             coordenadas: {
                 latitude: number;
                 longitude: number;
-            };
+            } | null;
         };
     } | null;
-    visible: boolean;       // ← nuevo prop requerido
+    visible: boolean;
     onClose: () => void;
 }
 
 const PersonInformation: React.FC<PersonInformationProps> = ({ person, visible, onClose }) => {
+
+    const nombreMostrar = person?.nombreCompleto
+        ?? `${person?.nombre ?? ''} ${person?.apellidoPaterno ?? ''} ${person?.apellidoMaterno ?? ''}`.trim();
+
     const handleCallPress = () => {
         if (person?.telefono) {
             Linking.openURL(`tel:${person.telefono}`);
@@ -68,16 +77,29 @@ const PersonInformation: React.FC<PersonInformationProps> = ({ person, visible, 
                         </View>
                     ) : (
                         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+
                             {/* Avatar */}
                             <View style={styles.avatarSection}>
-                                <View style={styles.avatarCircle}>
-                                    <Ionicons name="person" size={48} color="#4285F4" />
-                                </View>
+                                {person.imagenPerfil ? (
+                                    <Image
+                                        source={{ uri: person.imagenPerfil }}
+                                        style={{
+                                            width: 90,
+                                            height: 90,
+                                            borderRadius: 45,
+                                            resizeMode: 'cover',
+                                        }}
+                                    />
+                                ) : (
+                                    <View style={styles.avatarCircle}>
+                                        <Ionicons name="person" size={48} color="#4285F4" />
+                                    </View>
+                                )}
                             </View>
 
                             {/* Nombre y cargo */}
                             <View style={styles.section}>
-                                <Text style={styles.personName}>{person.nombreCompleto}</Text>
+                                <Text style={styles.personName}>{nombreMostrar}</Text>
                                 <View style={styles.cargoTag}>
                                     <Text style={styles.cargoText}>{person.cargo}</Text>
                                 </View>
@@ -122,6 +144,28 @@ const PersonInformation: React.FC<PersonInformationProps> = ({ person, visible, 
                                 </View>
                             )}
 
+                            {/* Horario */}
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Ionicons name="calendar" size={20} color="#4285F4" />
+                                    <Text style={styles.sectionTitle}>Horario</Text>
+                                </View>
+                                {person.imagenHorario ? (
+                                    <Image
+                                        source={{ uri: person.imagenHorario }}
+                                        style={{
+                                            width: '100%',
+                                            height: 200,
+                                            borderRadius: 8,
+                                            resizeMode: 'contain',
+                                            marginTop: 8,
+                                        }}
+                                    />
+                                ) : (
+                                    <Text style={styles.infoText}>Sin horario disponible</Text>
+                                )}
+                            </View>
+
                             {/* Contacto */}
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
@@ -140,27 +184,18 @@ const PersonInformation: React.FC<PersonInformationProps> = ({ person, visible, 
 
                             {/* Botones de acción */}
                             <View style={styles.actionsContainer}>
-                                <TouchableOpacity
-                                    style={styles.actionButton}
-                                    onPress={handleCallPress}
-                                >
+                                <TouchableOpacity style={styles.actionButton} onPress={handleCallPress}>
                                     <Ionicons name="call" size={24} color="#fff" />
                                     <Text style={styles.actionButtonText}>Llamar</Text>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={styles.actionButton}
-                                    onPress={handleEmailPress}
-                                >
+                                <TouchableOpacity style={styles.actionButton} onPress={handleEmailPress}>
                                     <Ionicons name="mail" size={24} color="#fff" />
                                     <Text style={styles.actionButtonText}>Email</Text>
                                 </TouchableOpacity>
 
-                                {person.ubicacion && (
-                                    <TouchableOpacity
-                                        style={styles.actionButton}
-                                        onPress={handleDirectionsPress}
-                                    >
+                                {person.ubicacion?.coordenadas && (
+                                    <TouchableOpacity style={styles.actionButton} onPress={handleDirectionsPress}>
                                         <Ionicons name="navigate" size={24} color="#fff" />
                                         <Text style={styles.actionButtonText}>Ir</Text>
                                     </TouchableOpacity>

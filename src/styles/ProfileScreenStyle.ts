@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         borderWidth: 2.5,
         borderColor: "#fff",
-        elevation: 4,
+        elevation: 9,
     },
 
     // ── Nombre y badge ────────────────────────────
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     },
     badge: {
         alignSelf: "center",
-        marginTop: 6,
+        marginTop: 10,
         backgroundColor: "#1D356B",
         paddingHorizontal: 16,
         paddingVertical: 4,

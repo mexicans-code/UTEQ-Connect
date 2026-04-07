@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, AppState } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, AppState } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -7,6 +7,29 @@ import { io, Socket } from "socket.io-client";
 import styles from "../styles/ProfileScreenStyle";
 import EventTicketSection from "../Components/profile/EventTicketSection";
 import { API_URL } from "../api/config";
+
+// 🔧 Helper: obtiene las iniciales del nombre completo
+const getInitials = (name: string | null): string => {
+  if (!name) return "?";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+// 🎨 Helper: color de fondo basado en el nombre (consistente por usuario)
+const getAvatarColor = (name: string | null): { bg: string; text: string } => {
+  const colors = [
+    { bg: "#B5D4F4", text: "#0C447C" },
+    { bg: "#9FE1CB", text: "#0F6E56" },
+    { bg: "#F4C0D1", text: "#72243E" },
+    { bg: "#CECBF6", text: "#3C3489" },
+    { bg: "#FAC775", text: "#633806" },
+    { bg: "#C0DD97", text: "#27500A" },
+  ];
+  if (!name) return colors[0];
+  const index = name.charCodeAt(0) % colors.length;
+  return colors[index];
+};
 
 const ProfileScreen = ({ navigation, setIsLoggedIn }: {
   navigation: any;
@@ -19,23 +42,18 @@ const ProfileScreen = ({ navigation, setIsLoggedIn }: {
   } | null>(null);
 
   const [ticketRefreshKey, setTicketRefreshKey] = React.useState(0);
-
   const refreshTickets = () => setTicketRefreshKey((k) => k + 1);
 
-  // Refresca datos cuando la pantalla gana foco
   useFocusEffect(
     React.useCallback(() => {
       getDataFromStorage();
-      // También refresca boletos al volver a esta pantalla (ej: después de registrarse)
       refreshTickets();
     }, [])
   );
 
-  // Refresca cuando vuelve del background
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
-        console.log("ProfileScreen: app volvió al frente, refrescando...");
         getDataFromStorage();
         refreshTickets();
       }
@@ -43,69 +61,19 @@ const ProfileScreen = ({ navigation, setIsLoggedIn }: {
     return () => subscription.remove();
   }, []);
 
-  // Socket.io — escucha cambios de eventos Y de boletos en tiempo real
   useEffect(() => {
-    console.log("ProfileScreen Socket: conectando a", API_URL.replace("/api", ""));
     const socket: Socket = io(API_URL.replace("/api", ""), {
       transports: ["websocket"],
     });
 
-    socket.on("connect", () => {
-      console.log("ProfileScreen Socket: conectado ✅", socket.id);
-    });
+    socket.on("ticket_created", () => refreshTickets());
+    socket.on("ticket_updated", () => refreshTickets());
+    socket.on("ticket_scanned", () => refreshTickets());
+    socket.on("event_created", () => { getDataFromStorage(); refreshTickets(); });
+    socket.on("event_updated", () => { getDataFromStorage(); refreshTickets(); });
+    socket.on("event_deleted", () => { getDataFromStorage(); refreshTickets(); });
 
-    // ── Eventos de tickets (los más importantes para esta pantalla) ──
-
-    // Nuevo boleto creado → el usuario acaba de registrarse a un evento
-    socket.on("ticket_created", (data) => {
-      console.log("ProfileScreen Socket: 🎟️ ticket creado", data);
-      refreshTickets();
-    });
-
-    // Boleto actualizado → aceptó/rechazó, asistencia marcada, QR regenerado
-    socket.on("ticket_updated", (data) => {
-      console.log("ProfileScreen Socket: ✏️ ticket actualizado", data);
-      refreshTickets();
-    });
-
-    // QR escaneado desde el dashboard → asistencia registrada en tiempo real
-    socket.on("ticket_scanned", (data) => {
-      console.log("ProfileScreen Socket: 📷 ticket escaneado", data);
-      refreshTickets();
-    });
-
-    // ── Eventos de eventos (afectan info mostrada en los boletos) ──
-
-    socket.on("event_created", (data) => {
-      console.log("ProfileScreen Socket: 🆕 evento creado", data);
-      getDataFromStorage();
-      refreshTickets();
-    });
-
-    socket.on("event_updated", (data) => {
-      console.log("ProfileScreen Socket: ✏️ evento actualizado", data);
-      getDataFromStorage();
-      refreshTickets();
-    });
-
-    socket.on("event_deleted", (data) => {
-      console.log("ProfileScreen Socket: 🗑️ evento eliminado", data);
-      getDataFromStorage();
-      refreshTickets();
-    });
-
-    socket.on("disconnect", () => {
-      console.log("ProfileScreen Socket: desconectado ❌");
-    });
-
-    socket.on("connect_error", (error) => {
-      console.log("ProfileScreen Socket: error de conexión ❌", error.message);
-    });
-
-    return () => {
-      console.log("ProfileScreen Socket: cerrando conexión");
-      socket.disconnect();
-    };
+    return () => { socket.disconnect(); };
   }, []);
 
   const getDataFromStorage = async () => {
@@ -137,10 +105,13 @@ const ProfileScreen = ({ navigation, setIsLoggedIn }: {
     navigation.navigate("Index");
   };
 
+  const initials = getInitials(userData?.userName ?? null);
+  const avatarColor = getAvatarColor(userData?.userName ?? null);
+
   return (
     <View style={styles.container}>
 
-      {/* Header azul fijo */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
         <View style={styles.headerLogo}>
@@ -150,36 +121,38 @@ const ProfileScreen = ({ navigation, setIsLoggedIn }: {
         </View>
       </View>
 
-      {/* Cuerpo blanco */}
       <View style={styles.body}>
 
-        {/* Avatar flotando sobre el borde */}
+        {/* Avatar de iniciales */}
         <View style={styles.avatarRow}>
           <View style={styles.avatarWrapper}>
-            <Image
-              style={styles.avatar}
-              source={{
-                uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9V9bFqFOyNixRcgyVHHTi9CI4nfB49BlcgA&s",
-              }}
-            />
-            <TouchableOpacity style={styles.editAvatarButton} activeOpacity={0.8}>
-              <MaterialCommunityIcons name="pencil" size={14} color="#fff" />
-            </TouchableOpacity>
+            <View
+              style={[
+                styles.avatar,
+                {
+                  backgroundColor: avatarColor.bg,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 999,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 26, fontWeight: "600", color: avatarColor.text }}>
+                {initials}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Contenido con scroll */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.bodyContent}
         >
-          {/* Nombre y rol */}
           <Text style={styles.name}>{userData?.userName ?? "—"}</Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>Alumno</Text>
           </View>
 
-          {/* Info rows */}
           <View style={styles.infoSection}>
             <View style={[styles.infoRow, styles.infoRowBorder]}>
               <View style={styles.infoIconBox}>
@@ -192,7 +165,6 @@ const ProfileScreen = ({ navigation, setIsLoggedIn }: {
             </View>
           </View>
 
-          {/* Cerrar sesión */}
           <TouchableOpacity
             style={styles.logoutButton}
             activeOpacity={0.85}
@@ -202,7 +174,6 @@ const ProfileScreen = ({ navigation, setIsLoggedIn }: {
             <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
           </TouchableOpacity>
 
-          {/* Boletos — key fuerza re-mount cuando cambia cualquier ticket o evento */}
           <View style={styles.ticketsSection}>
             <EventTicketSection key={ticketRefreshKey} />
           </View>

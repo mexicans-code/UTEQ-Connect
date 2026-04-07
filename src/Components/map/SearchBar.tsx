@@ -22,6 +22,8 @@ interface PersonaResult {
   departamento: string;
   cubiculo?: string;
   planta?: string;
+  imagenPerfil?: string | null;
+  imagenHorario?: string | null;
   ubicacion: {
     nombre: string;
     coordenadas: { latitude: number; longitude: number };
@@ -164,6 +166,8 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
       departamento: persona.departamento,
       cubiculo: persona.cubiculo,
       planta: persona.planta,
+      imagenPerfil: persona.imagenPerfil ?? null,
+      imagenHorario: persona.imagenHorario ?? null,
     };
     onSelectLocation?.(location, personData);
   };
