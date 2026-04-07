@@ -24,7 +24,7 @@ const EventsNavigator = () => {
         options={{
           headerShown: true,
           headerTitle: 'Detalle del Evento',
-          headerStyle: { backgroundColor: '#1e3a5f' },
+          headerStyle: { backgroundColor: '#152C59' },
           headerTintColor: '#fff',
           headerTitleStyle: { fontWeight: '700' },
         }}
@@ -36,7 +36,7 @@ const EventsNavigator = () => {
         options={{
           headerShown: true,
           headerTitle: 'Mi Boleto',
-          headerStyle: { backgroundColor: '#1e3a5f' },
+          headerStyle: { backgroundColor: '#152C59' },
           headerTintColor: '#fff',
           headerTitleStyle: { fontWeight: '700' },
         }}

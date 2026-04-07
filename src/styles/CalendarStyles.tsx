@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
     },
     verTodosText: {
         fontSize: 13,
-        color: '#1a73e8',
+        color: '#152C59',
         fontWeight: '600',
     },
 
@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
     cellToday: {
         backgroundColor: '#e8f0fe',
         borderWidth: 1.5,
-        borderColor: '#1a73e8',
+        borderColor: '#152C59',
     },
 
     cellSelected: {
@@ -101,7 +101,7 @@ export const styles = StyleSheet.create({
     },
 
     cellHasEvents: {
-        backgroundColor: '#1a73e8',
+        backgroundColor: '#152C59',
     },
 
     dayText: {
@@ -113,7 +113,7 @@ export const styles = StyleSheet.create({
         color: '#ef4444',
     },
     todayText: {
-        color: '#1a73e8',
+        color: '#152C59',
         fontWeight: '800',
     },
     selectedText: {
@@ -149,7 +149,7 @@ export const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#1a73e8',
+        backgroundColor: '#152C59',
     },
     legendText: {
         fontSize: 12,
@@ -170,7 +170,7 @@ export const styles = StyleSheet.create({
     eventsPanelTitle: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#1a73e8',
+        color: '#152C59',
         marginBottom: 12,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -235,7 +235,7 @@ export const styles = StyleSheet.create({
     },
 
     fullCalBtn: {
-        backgroundColor: '#1a73e8',
+        backgroundColor: '#152C59',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',

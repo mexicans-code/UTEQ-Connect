@@ -72,6 +72,8 @@ export interface PersonData {
     cargo: string;
     departamento: string;
     cubiculo?: string;
+    imagenPerfil?: string | null;
+    imagenHorario?: string | null;
     planta?: string;
 }
 
@@ -108,6 +110,8 @@ export interface PersonalConUbicacion {
         cubiculo?: string;
         planta?: string;
         estatus: string;
+        imagenPerfil?: string | null;
+        imagenHorario?: string | null;
     }>;
     total: number;
 }

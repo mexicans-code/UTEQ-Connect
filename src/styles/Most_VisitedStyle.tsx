@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
     sliderContent: {
         paddingHorizontal: 16,
         gap: 16,
+        paddingBottom: 8
     },
 
     // Tarjeta de destino
@@ -46,6 +47,7 @@ export const styles = StyleSheet.create({
         width: '100%',
         height: 160,
         backgroundColor: '#f0f0f0',
+        overflow: 'hidden',
     },
 
     cardImage: {
@@ -76,7 +78,7 @@ export const styles = StyleSheet.create({
 
     // Botón
     cardButton: {
-        backgroundColor: '#2563EB',
+        backgroundColor: '#1e3a5f',
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderRadius: 10,
@@ -107,6 +109,6 @@ export const styles = StyleSheet.create({
 
     dotActive: {
         width: 20,
-        backgroundColor: '#2563EB',
+        backgroundColor: '#1e3a5f',
     },
 });

@@ -593,7 +593,7 @@ const navStyles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 16,
-        backgroundColor: "#1a73e8",
+        backgroundColor: "#152C59",
         justifyContent: "center",
         alignItems: "center",
         marginRight: 14,
@@ -615,7 +615,7 @@ const navStyles = StyleSheet.create({
         lineHeight: 26,
     },
     distanceText: {
-        color: "#1a73e8",
+        color: "#152C59",
         fontSize: 15,
         fontWeight: "600",
         marginTop: 3,

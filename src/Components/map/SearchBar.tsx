@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   TextInput,
@@ -22,6 +22,8 @@ interface PersonaResult {
   departamento: string;
   cubiculo?: string;
   planta?: string;
+  imagenPerfil?: string | null;
+  imagenHorario?: string | null;
   ubicacion: {
     nombre: string;
     coordenadas: { latitude: number; longitude: number };
@@ -64,6 +66,7 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
+  const justSelected = useRef(false);
 
   useEffect(() => {
     getLocations().then(setLocations);
@@ -75,6 +78,12 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
       setShowSuggestions(false);
       return;
     }
+
+    if (justSelected.current) {
+      justSelected.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => runSearch(value.trim()), 300);
     return () => clearTimeout(timer);
   }, [value, locations]);
@@ -128,12 +137,14 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
   };
 
   const handleSelectLocation = (loc: Location) => {
+    justSelected.current = true;
     onChange(loc.nombre);
     setShowSuggestions(false);
     onSelectLocation?.(loc);
   };
 
   const handleSelectPerson = (persona: PersonaResult) => {
+    justSelected.current = true;
     onChange(persona.nombreCompleto);
     setShowSuggestions(false);
     if (!persona.ubicacion) return;
@@ -155,18 +166,18 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
       departamento: persona.departamento,
       cubiculo: persona.cubiculo,
       planta: persona.planta,
+      imagenPerfil: persona.imagenPerfil ?? null,
+      imagenHorario: persona.imagenHorario ?? null,
     };
     onSelectLocation?.(location, personData);
   };
 
   const handleSelectEvent = (event: EventResult) => {
+    justSelected.current = true;
     onChange(event.titulo);
     setShowSuggestions(false);
     if (!event.destino?.posicion) return;
 
-    // Pack every event field into the Location object.
-    // MapViewContainer.handleLocationSelect receives this exactly as-is
-    // because personData is undefined, so no isPerson overwrite happens.
     const location: Location = {
       _id: event._id,
       nombre: event.destino.nombre,
@@ -187,21 +198,22 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
       eventImage: event.image,
       eventEspacioNombre: event.espacio?.nombre,
       eventEncargado: event.creadoPor
-        ? [
-          event.creadoPor.nombre,
-          event.creadoPor.apellidoPaterno,
-        ].filter(Boolean).join(' ')
+        ? [event.creadoPor.nombre, event.creadoPor.apellidoPaterno]
+            .filter(Boolean)
+            .join(" ")
         : undefined,
       eventEncargadoEmail: event.creadoPor?.email,
     };
 
-    onSelectLocation?.(location);   // no personData → handleLocationSelect won't overwrite isEvent
+    onSelectLocation?.(location);
   };
 
   const formatEventDate = (fecha: string) => {
-    if (!fecha) return '';
+    if (!fecha) return "";
     return new Date(fecha).toLocaleDateString("es-MX", {
-      day: "numeric", month: "short", timeZone: "UTC"
+      day: "numeric",
+      month: "short",
+      timeZone: "UTC",
     });
   };
 
@@ -233,7 +245,6 @@ const SearchBar = ({ value, onChange, onSelectLocation }: Props) => {
         </TouchableOpacity>
       );
     }
-    // "event"
     return (
       <TouchableOpacity
         style={styles.suggestionItem}

@@ -109,13 +109,6 @@ const Most_visited = ({ navigation }: Props) => {
                                     {destination.nombre}
                                 </Text>
 
-                                <TouchableOpacity
-                                    style={styles.cardButton}
-                                    onPress={() => handleNavigateToDestination(destination)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text style={styles.cardButtonText}>Ver Ruta</Text>
-                                </TouchableOpacity>
                             </View>
                         </View>
                     );

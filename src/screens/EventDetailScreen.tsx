@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -18,13 +18,10 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { EventsStackParamList } from '../types/navigation';
 import { API_URL } from '../api/config';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
 
 type EventDetailRouteProp = RouteProp<EventsStackParamList, 'EventDetail'>;
 type EventDetailNavigationProp = StackNavigationProp<EventsStackParamList, 'EventDetail'>;
-
-const ACCENT = '#003366';
 
 const EventDetailScreen = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -33,16 +30,65 @@ const EventDetailScreen = () => {
   const { eventId } = route.params;
 
   const [event, setEvent] = useState<any>(null);
-  const [invitation, setInvitation] = useState(null);
+  const [invitation, setInvitation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Refresca al enfocar la pantalla (ej: volver del ticket)
   useFocusEffect(
     useCallback(() => {
       checkAuthAndFetchEvent();
     }, [])
   );
+
+  // Socket.io — actualiza el evento y la invitación en tiempo real
+  useEffect(() => {
+    const socket: Socket = io(API_URL.replace('/api', ''), {
+      transports: ['websocket'],
+    });
+
+    socket.on('connect', () => {
+      console.log('EventDetailScreen Socket: conectado ✅', socket.id);
+    });
+
+    // Nuevo ticket creado → puede ser el del usuario actual, refrescar invitación
+    socket.on('ticket_created', (data) => {
+      console.log('EventDetailScreen Socket: 🎟️ ticket creado', data);
+      fetchEventDetails();
+    });
+
+    // Ticket actualizado → el estado de la invitación cambió
+    socket.on('ticket_updated', (data) => {
+      console.log('EventDetailScreen Socket: ✏️ ticket actualizado', data);
+      fetchEventDetails();
+    });
+
+    // El evento fue modificado → actualizar cupos, estado, info
+    socket.on('event_updated', (data) => {
+      console.log('EventDetailScreen Socket: 🔄 evento actualizado', data);
+      fetchEventDetails();
+    });
+
+    // El evento fue eliminado → volver atrás
+    socket.on('event_deleted', (data) => {
+      console.log('EventDetailScreen Socket: 🗑️ evento eliminado', data);
+      Alert.alert('Evento eliminado', 'Este evento ya no está disponible.');
+      navigation.goBack();
+    });
+
+    socket.on('disconnect', () => {
+      console.log('EventDetailScreen Socket: desconectado ❌');
+    });
+
+    socket.on('connect_error', (err) => {
+      console.log('EventDetailScreen Socket: error ❌', err.message);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [eventId]);
 
   const checkAuthAndFetchEvent = async () => {
     try {
@@ -60,15 +106,13 @@ const EventDetailScreen = () => {
 
   const fetchEventDetails = async (tokenParam?: string | null, userIdParam?: string | null) => {
     try {
-      const token = tokenParam || await AsyncStorage.getItem('userToken');
-      const currentUserId = userIdParam || await AsyncStorage.getItem('userId');
+      const token = tokenParam ?? await AsyncStorage.getItem('userToken');
+      const currentUserId = userIdParam ?? await AsyncStorage.getItem('userId');
 
       const eventResponse = await axios.get(
         `${API_URL}/events/${eventId}`,
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
-      console.log('raw response:', JSON.stringify(eventResponse.data.data, null, 2));
-      setEvent(eventResponse.data.data);
       setEvent(eventResponse.data.data);
 
       if (token && currentUserId) {
@@ -123,15 +167,17 @@ const EventDetailScreen = () => {
                 {},
                 { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
               );
+
+              // Actualizar invitación localmente de inmediato
+              // (el socket también lo hará, esto es para respuesta instantánea)
+              setInvitation(response.data.data.invitation);
+
               Alert.alert(
                 '¡Registro Exitoso!',
                 'Te has registrado correctamente al evento. Se ha enviado tu boleto a tu correo electrónico.',
                 [{
                   text: 'Ver Mi Boleto',
-                  onPress: () => {
-                    setInvitation(response.data.data.invitation);
-                    navigation.navigate('Ticket', { eventId });
-                  },
+                  onPress: () => navigation.navigate('Ticket', { eventId }),
                 }]
               );
             } catch (error: any) {
@@ -158,12 +204,11 @@ const EventDetailScreen = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Fecha no disponible';
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Fecha no disponible v2';
+    if (isNaN(date.getTime())) return 'Fecha no disponible';
     return date.toLocaleDateString('es-MX', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
     });
   };
-
 
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
@@ -193,15 +238,12 @@ const EventDetailScreen = () => {
   }
 
   const imageUrl = getImageUrl(event.image);
-
   const espacio = event.espacio && typeof event.espacio === 'object' ? event.espacio : null;
 
   return (
-    console.log('event.fecha:', event?.fecha),
-
     <View style={styles.container}>
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+
         {/* Header con imagen */}
         <View style={styles.headerImage}>
           {imageUrl ? (
@@ -274,7 +316,6 @@ const EventDetailScreen = () => {
                     </Text>
                   ) : null}
                 </View>
-                {/* Badge disponible/ocupado */}
                 <View style={{
                   backgroundColor: espacio.ocupado ? '#FDEEEC' : '#E8F5E9',
                   borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'center',
@@ -319,6 +360,7 @@ const EventDetailScreen = () => {
         </View>
       </ScrollView>
 
+      {/* Footer con botón dinámico */}
       <View style={styles.footer}>
         {!invitation && event.activo && event.cuposDisponibles > 0 ? (
           <TouchableOpacity
@@ -328,7 +370,11 @@ const EventDetailScreen = () => {
             activeOpacity={0.8}
           >
             <Text style={styles.registerButtonText}>
-              {registering ? 'Registrando...' : isAuthenticated ? 'Confirmar Registro' : 'Iniciar Sesión para Registrarse'}
+              {registering
+                ? 'Registrando...'
+                : isAuthenticated
+                  ? 'Confirmar Registro'
+                  : 'Iniciar Sesión para Registrarse'}
             </Text>
           </TouchableOpacity>
         ) : invitation ? (

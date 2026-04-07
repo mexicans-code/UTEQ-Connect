@@ -35,7 +35,7 @@ export default StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1e3a5f',
+    color: '#152C59',
     marginTop: 4,
   },
   logoutButton: {
@@ -111,12 +111,12 @@ export default StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1e3a5f',
+    color: '#152C59',
     marginBottom: 16,
     textAlign: 'center',
   },
   cardButton: {
-    backgroundColor: '#1e3a5f',
+    backgroundColor: '#152C59',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -148,7 +148,7 @@ export default StyleSheet.create({
     marginHorizontal: 4,
   },
   dotActive: {
-    backgroundColor: '#1e3a5f',
+    backgroundColor: '#152C59',
     width: 28,
   },
   
@@ -214,12 +214,12 @@ export default StyleSheet.create({
   },
   sectionLink: {
     fontSize: 14,
-    color: '#1e3a5f',
+    color: '#152C59',
     fontWeight: '600',
   },
   calendarImageContainer: {
     height: 200,
-    backgroundColor: '#1e3a5f',
+    backgroundColor: '#152C59',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -234,7 +234,7 @@ export default StyleSheet.create({
   },
   calendarButton: {
     padding: 16,
-    backgroundColor: '#1e3a5f',
+    backgroundColor: '#152C59',
     alignItems: 'center',
   },
   calendarButtonText: {
@@ -272,6 +272,6 @@ export default StyleSheet.create({
   actionText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1e3a5f',
+    color: '#152C59',
   },
 });

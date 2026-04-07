@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     ActivityIndicator,
-    ScrollView,
-    StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
+import { useFocusEffect } from '@react-navigation/native';
 import { styles } from '../../styles/CalendarStyles';
 
-const API_URL = 'https://uteq-connect-server-production.up.railway.app/api';
+import { API_URL } from "../../api/config";
+const SOCKET_URL = API_URL.replace("/api", "");
 
 const MONTHS_ES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 const DAYS_ES = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
-
 const EVENT_COLORS = ['#6366f1', '#22c55e', '#f97316', '#ec4899', '#06b6d4', '#eab308'];
 
 interface Event {
@@ -44,20 +44,68 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchEvents();
-    }, []);
+    const fetchRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
-    const fetchEvents = async () => {
-        try {
-            const res = await axios.get(`${API_URL}/events/active`);
-            setEvents(res.data.data || []);
-        } catch (e) {
-            setEvents([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // useFocusEffect — conecta socket cuando la pantalla está visible
+    // y lo desconecta cuando pierde foco (usuario cambia de tab)
+    useFocusEffect(
+        useCallback(() => {
+            const fetchEvents = async () => {
+                try {
+                    const res = await axios.get(`${API_URL}/events/active`);
+                    setEvents(res.data.data || []);
+                } catch {
+                    setEvents([]);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            fetchRef.current = fetchEvents;
+            fetchEvents();
+
+            console.log('CalendarSection Socket: conectando...');
+            const socket: Socket = io(SOCKET_URL, {
+                transports: ['polling', 'websocket'],
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 2000,
+            });
+
+            socket.on('connect', () => {
+                console.log('CalendarSection Socket: conectado ✅', socket.id);
+            });
+
+            socket.on('event_created', (data) => {
+                console.log('CalendarSection Socket: 🆕 evento creado', data);
+                fetchRef.current?.();
+            });
+
+            socket.on('event_updated', (data) => {
+                console.log('CalendarSection Socket: ✏️ evento actualizado', data);
+                fetchRef.current?.();
+            });
+
+            socket.on('event_deleted', (data) => {
+                console.log('CalendarSection Socket: 🗑️ evento eliminado', data);
+                fetchRef.current?.();
+            });
+
+            socket.on('disconnect', () => {
+                console.log('CalendarSection Socket: desconectado ❌');
+            });
+
+            socket.on('connect_error', (err) => {
+                console.log('CalendarSection Socket: error ❌', err.message);
+            });
+
+            // Cleanup: se ejecuta cuando la pantalla pierde foco
+            return () => {
+                console.log('CalendarSection Socket: cerrando conexión');
+                socket.disconnect();
+            };
+        }, [])
+    );
 
     const eventsByDate: Record<string, Event[]> = {};
     events.forEach((ev) => {
@@ -68,7 +116,6 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -92,17 +139,11 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
 
     return (
         <View style={styles.wrapper}>
-            {/* Header sección */}
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Eventos este mes</Text>
-                <TouchableOpacity onPress={onVerTodos} style={styles.verTodosBtn}>
-                    <Text style={styles.verTodosText}>Ver todos</Text>
-                    <Ionicons name="arrow-forward" size={13} color="#6366f1" />
-                </TouchableOpacity>
             </View>
 
             <View style={styles.card}>
-                {/* Navegación mes */}
                 <View style={styles.monthNav}>
                     <TouchableOpacity onPress={prevMonth} style={styles.navBtn}>
                         <Ionicons name="chevron-back" size={18} color="#374151" />
@@ -115,16 +156,12 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
                     </TouchableOpacity>
                 </View>
 
-                {/* Días de la semana */}
                 <View style={styles.weekRow}>
                     {DAYS_ES.map((d, i) => (
-                        <Text key={i} style={[styles.weekDay, i === 0 && styles.sunday]}>
-                            {d}
-                        </Text>
+                        <Text key={i} style={[styles.weekDay, i === 0 && styles.sunday]}>{d}</Text>
                     ))}
                 </View>
 
-                {/* Grid días */}
                 {loading ? (
                     <ActivityIndicator color="#6366f1" style={{ marginVertical: 24 }} />
                 ) : (
@@ -136,9 +173,7 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
                             const isToday = key === todayStr;
                             const isSelected = key === selectedDay;
                             const isSunday = idx % 7 === 0;
-
                             const isPast = key < todayStr;
-
 
                             return (
                                 <TouchableOpacity
@@ -169,10 +204,7 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
                                             {dayEvents.slice(0, 3).map((_, i) => (
                                                 <View
                                                     key={i}
-                                                    style={[
-                                                        styles.dot,
-                                                        { backgroundColor: isSelected ? '#90caf9' : '#fff' }
-                                                    ]}
+                                                    style={[styles.dot, { backgroundColor: isSelected ? '#90caf9' : '#fff' }]}
                                                 />
                                             ))}
                                         </View>
@@ -183,16 +215,16 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
                     </View>
                 )}
 
-                {/* Leyenda contador */}
                 <View style={styles.legendRow}>
                     <View style={styles.legendDot} />
                     <Text style={styles.legendText}>
-                        {Object.keys(eventsByDate).filter(k => k.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length} días con eventos este mes
+                        {Object.keys(eventsByDate).filter(k =>
+                            k.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
+                        ).length} días con eventos este mes
                     </Text>
                 </View>
             </View>
 
-            {/* Panel eventos del día seleccionado */}
             {selectedDay && (
                 <View style={styles.eventsPanel}>
                     <Text style={styles.eventsPanelTitle}>
@@ -252,7 +284,5 @@ const CalendarSection = ({ onEventPress, onVerTodos }: CalendarSectionProps) => 
         </View>
     );
 };
-
-
 
 export default CalendarSection;

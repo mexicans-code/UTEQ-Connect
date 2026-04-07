@@ -1,54 +1,73 @@
-import { StyleSheet, Platform } from "react-native";
+import { StyleSheet, Platform, Dimensions } from "react-native";
 
-const HEADER_HEIGHT = Platform.OS === "ios" ? 130 : 110;
+const { height } = Dimensions.get("window");
 const AVATAR_SIZE = 96;
-const AVATAR_OVERLAP = AVATAR_SIZE / 2; // cuánto sobresale del header
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F2F2F2",
+        backgroundColor: "#1D356B",
     },
 
-    // ── Header ──────────────────────────────────
+    // ── Header zona azul ─────────────────────────
     header: {
-        height: 120,
-        backgroundColor: "#1D356B",
-        paddingHorizontal: 20,
-        paddingTop: Platform.OS === "ios" ? 54 : 38,
-        alignItems: "flex-end",
-        justifyContent: "flex-start",
+        paddingHorizontal: 24,
+        paddingTop: Platform.OS === "ios" ? 56 : 36,
+        paddingBottom: 70,
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+    },
+    headerTitle: {
+        color: "#fff",
+        fontSize: 22,
+        fontWeight: "800",
+        letterSpacing: 0.3,
     },
     headerLogo: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        gap: 5,
     },
     headerLogoText: {
         color: "#fff",
         fontSize: 14,
-        fontWeight: "700",
-        letterSpacing: 0.4,
+        fontWeight: "800",
+        letterSpacing: 1.2,
     },
     headerLogoSubText: {
         color: "#9CC3FF",
-        fontSize: 12,
-        fontWeight: "600",
+        fontSize: 13,
+        fontWeight: "500",
     },
 
-    // ── Avatar (fuera del scroll, flota sobre header y tarjeta) ──
-    avatarContainer: {
-        position: "absolute",
-        top: HEADER_HEIGHT - AVATAR_OVERLAP,
-        left: 0,
-        right: 0,
+    // ── Cuerpo blanco que ocupa el resto ──────────
+    body: {
+        flex: 1,
+        backgroundColor: "#F4F6FA",
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        paddingHorizontal: 24,
+        paddingBottom: 32,
+    },
+
+    bodyContent: {
+        paddingBottom: 40,
+    },
+    avatarRow: {
         alignItems: "center",
-        zIndex: 20,
+        marginTop: -(AVATAR_SIZE / 2),
+        marginBottom: 12,
     },
     avatarWrapper: {
         position: "relative",
         width: AVATAR_SIZE,
         height: AVATAR_SIZE,
+        shadowColor: "#1D356B",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 14,
+        elevation: 10,
     },
     avatar: {
         width: AVATAR_SIZE,
@@ -59,130 +78,146 @@ const styles = StyleSheet.create({
     },
     editAvatarButton: {
         position: "absolute",
-        right: 0,
-        bottom: 0,
+        right: 1,
+        bottom: 1,
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: "#fff",
+        backgroundColor: "#1D356B",
         alignItems: "center",
         justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-        elevation: 3,
+        borderWidth: 2.5,
+        borderColor: "#fff",
+        elevation: 9,
     },
 
-    // ── Scroll ──────────────────────────────────
-    scrollView: {
-        flex: 1,
-        // sube el scroll para que la tarjeta quede bajo el avatar
-        marginTop: -(AVATAR_OVERLAP),
-    },
-    scrollContent: {
-        paddingTop: AVATAR_OVERLAP + 8,  // espacio = mitad del avatar + pequeño margen
-        paddingBottom: 60,
-    },
-
-    // ── Tarjeta de perfil ────────────────────────
-    content: {
-        backgroundColor: "#fff",
-        marginHorizontal: 16,
-        borderRadius: 20,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 28,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.10,
-        shadowRadius: 12,
-        elevation: 5,
-    },
+    // ── Nombre y badge ────────────────────────────
     name: {
-        marginTop: 4,
-        fontSize: 20,
-        fontWeight: "700",
-        color: "#111",
+        textAlign: "center",
+        fontSize: 22,
+        fontWeight: "800",
+        color: "#0F1F42",
+        letterSpacing: 0.2,
     },
     badge: {
-        marginTop: 8,
-        borderWidth: 1,
-        borderColor: "#333",
-        paddingHorizontal: 14,
+        alignSelf: "center",
+        marginTop: 10,
+        backgroundColor: "#1D356B",
+        paddingHorizontal: 16,
         paddingVertical: 4,
-        borderRadius: 20,
+        borderRadius: 6,
     },
     badgeText: {
-        fontSize: 12,
-        fontWeight: "600",
-        color: "#222",
+        fontSize: 11,
+        fontWeight: "700",
+        color: "#fff",
+        letterSpacing: 1.3,
+        textTransform: "uppercase",
     },
-    email: {
-        marginTop: 12,
-        fontSize: 13,
-        color: "#777",
+
+    // ── Info rows ────────────────────────────────
+    infoSection: {
+        marginTop: 24,
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        paddingVertical: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
-    logoutButton: {
-        marginTop: 20,
-        backgroundColor: "#8B0F1A",
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 10,
-        minWidth: 200,
+    infoRow: {
+        flexDirection: "row",
         alignItems: "center",
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        gap: 14,
+    },
+    infoRowBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: "#F0F3FA",
+    },
+    infoIconBox: {
+        width: 38,
+        height: 38,
+        borderRadius: 10,
+        backgroundColor: "#EEF2FB",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    infoTextGroup: {
+        flex: 1,
+    },
+    infoLabel: {
+        fontSize: 11,
+        color: "#A0A8BB",
+        fontWeight: "600",
+        letterSpacing: 0.6,
+        textTransform: "uppercase",
+    },
+    infoValue: {
+        fontSize: 14,
+        color: "#1A1F2E",
+        fontWeight: "600",
+        marginTop: 2,
+    },
+
+    // ── Botón logout ─────────────────────────────
+    logoutButton: {
+        marginTop: 24,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        backgroundColor: "#8B0F1A",
+        paddingVertical: 15,
+        borderRadius: 14,
+        shadowColor: "#8B0F1A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
     },
     logoutButtonText: {
         color: "#fff",
         fontSize: 15,
-        fontWeight: "600",
+        fontWeight: "700",
+        letterSpacing: 0.3,
     },
 
-    // ── Boletos ──────────────────────────────────
+    // ── Boletos ───────────────────────────────────
     ticketsSection: {
-        marginTop: 24,
+        marginTop: 20,
+        flex: 1,
     },
 
-    // ── legacy ───────────────────────────────────
-    infoList: {
-        marginTop: 24,
-        width: "100%",
-        gap: 10,
-    },
-    infoItem: {
-        fontSize: 14,
-        color: "#333",
-    },
-    bottomNav: {
-        position: "absolute",
-        left: 12,
-        right: 12,
-        bottom: 40,
-        backgroundColor: "#fff",
-        borderRadius: 999,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 6,
-    },
-    navItem: {
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 4,
-        minWidth: 64,
-    },
-    navLabel: {
-        fontSize: 12,
-        color: "#555",
-        fontWeight: "600",
-    },
+    // ── legacy (no borrar) ────────────────────────
+    content: {},
+    email: {},
+    infoList: {},
+    infoItem: {},
+    scrollView: {},
+    scrollContent: {},
+    avatarContainer: {},
+    bottomNav: {},
+    navItem: {},
+    navLabel: {},
+    sectionTitle: {},
+    sliderSection: {},
+    sliderContent: {},
+    destinationCard: {},
+    firstCard: {},
+    cardImageContainer: {},
+    cardImage: {},
+    cardImagePlaceholder: {},
+    cardContent: {},
+    cardTitle: {},
+    cardButton: {},
+    cardButtonText: {},
+    pagination: {},
+    dot: {},
+    dotActive: {},
 });
 
 export default styles;

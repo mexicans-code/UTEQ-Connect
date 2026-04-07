@@ -12,6 +12,7 @@ import {
     Pressable,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { io, Socket } from 'socket.io-client';
 
 const API_URL = 'https://uteq-connect-server-production.up.railway.app';
 const { width } = Dimensions.get('window');
@@ -65,7 +66,6 @@ const QRModal = ({ ticket, onClose }: { ticket: Ticket | null; onClose: () => vo
         <Modal visible={!!ticket} transparent animationType="fade" onRequestClose={onClose}>
             <Pressable style={s.modalBackdrop} onPress={onClose}>
                 <Pressable style={s.modalCard} onPress={() => {}}>
-                    {/* Cabecera */}
                     <View style={s.modalHeader}>
                         <Text style={s.modalTitle} numberOfLines={2}>{ticket.evento.titulo}</Text>
                         <View style={[s.modalBadge, { backgroundColor: estado.bg }]}>
@@ -74,7 +74,6 @@ const QRModal = ({ ticket, onClose }: { ticket: Ticket | null; onClose: () => vo
                         </View>
                     </View>
 
-                    {/* QR */}
                     <View style={s.qrContainer}>
                         {ticket.qrCode ? (
                             <Image
@@ -89,7 +88,6 @@ const QRModal = ({ ticket, onClose }: { ticket: Ticket | null; onClose: () => vo
                         )}
                     </View>
 
-                    {/* Info */}
                     <Text style={s.modalDate}>
                         📅 {formatDate(ticket.evento.fecha)}  🕐 {ticket.evento.horaInicio} – {ticket.evento.horaFin}
                     </Text>
@@ -109,14 +107,13 @@ const QRModal = ({ ticket, onClose }: { ticket: Ticket | null; onClose: () => vo
     );
 };
 
-// ── Ticket Card (carrusel) ───────────────────────────────────
+// ── Ticket Card ──────────────────────────────────────────────
 const TicketCard = ({ ticket, onPress }: { ticket: Ticket; onPress: () => void }) => {
     if (!ticket.evento) return null;
     const estado = ESTADO_CONFIG[ticket.estadoInvitacion];
     const ev = ticket.evento;
     return (
         <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.88}>
-            {/* Imagen / placeholder */}
             <View style={s.cardImg}>
                 {ev.image ? (
                     <Image source={{ uri: ev.image }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
@@ -125,7 +122,6 @@ const TicketCard = ({ ticket, onPress }: { ticket: Ticket; onPress: () => void }
                         <Text style={{ fontSize: 36 }}>🎪</Text>
                     </View>
                 )}
-                {/* Gradiente simulado */}
                 <View style={s.imgOverlay} />
                 <View style={[s.badgeOverlay, { backgroundColor: estado.bg }]}>
                     <View style={[s.dot, { backgroundColor: estado.dot }]} />
@@ -133,13 +129,11 @@ const TicketCard = ({ ticket, onPress }: { ticket: Ticket; onPress: () => void }
                 </View>
             </View>
 
-            {/* Info */}
             <View style={s.cardInfo}>
                 <Text style={s.cardTitle} numberOfLines={1}>{ev.titulo}</Text>
                 <Text style={s.cardDate}>📅 {formatDate(ev.fecha)}</Text>
                 <Text style={s.cardDate}>🕐 {ev.horaInicio} – {ev.horaFin}</Text>
 
-                {/* Divisor estilo boleto */}
                 <View style={s.divider}>
                     <View style={s.notch} />
                     <View style={s.dashedLine} />
@@ -182,18 +176,74 @@ const EventTicketSection = () => {
             });
             const data = await res.json();
             if (!res.ok || !data.success) { setError(data.error || 'Error'); return; }
-            // Filter out tickets with null/undefined evento to prevent crashes
-            const validTickets = (data.data as Ticket[]).filter((t) => t.evento != null);
+            const validTickets = (data.data as Ticket[])
+                    .filter((t) =>
+                        t.evento != null &&
+                        t.estadoInvitacion === 'aceptada'
+                    );
             setTickets(validTickets);
         } catch { setError('No se pudo conectar'); }
         finally { setLoading(false); }
     }, []);
 
+    // Carga inicial
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
+
+    // ── Socket.io ────────────────────────────────────────────
+    useEffect(() => {
+        console.log('EventTicketSection Socket: conectando...');
+        const socket: Socket = io(API_URL, { transports: ['websocket'] });
+
+        socket.on('connect', () => {
+            console.log('EventTicketSection Socket: conectado ✅', socket.id);
+        });
+
+        // Ticket creado (auto-registro o invitación masiva desde dashboard)
+        socket.on('ticket_created', (data) => {
+            console.log('EventTicketSection Socket: 🎟️ ticket creado', data);
+            fetchTickets();
+        });
+
+        // Ticket actualizado (respuesta aceptada/rechazada, asistencia manual, QR regenerado)
+        socket.on('ticket_updated', (data) => {
+            console.log('EventTicketSection Socket: ✏️ ticket actualizado', data);
+            fetchTickets();
+        });
+
+        // QR escaneado desde dashboard → asistencia registrada
+        socket.on('ticket_scanned', (data) => {
+            console.log('EventTicketSection Socket: 📷 ticket escaneado', data);
+            fetchTickets();
+        });
+
+        // Info del evento cambió (título, fecha, hora, etc.)
+        socket.on('event_updated', (data) => {
+            console.log('EventTicketSection Socket: 🔄 evento actualizado', data);
+            fetchTickets();
+        });
+
+        // Evento eliminado → limpiar tickets huérfanos
+        socket.on('event_deleted', (data) => {
+            console.log('EventTicketSection Socket: 🗑️ evento eliminado', data);
+            fetchTickets();
+        });
+
+        socket.on('disconnect', () => {
+            console.log('EventTicketSection Socket: desconectado ❌');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.log('EventTicketSection Socket: error ❌', error.message);
+        });
+
+        return () => {
+            console.log('EventTicketSection Socket: cerrando conexión');
+            socket.disconnect();
+        };
+    }, [fetchTickets]);
 
     return (
         <View style={s.section}>
-            {/* Encabezado de sección */}
             <View style={s.sectionHeader}>
                 <Text style={s.sectionTitle}>Mis Boletos</Text>
                 {!loading && !error && (
@@ -235,266 +285,83 @@ const EventTicketSection = () => {
     );
 };
 
-
 // ── Styles ───────────────────────────────────────────────────
 const s = StyleSheet.create({
-    section: {
-        paddingBottom: 8,
-    },
+    section: { paddingBottom: 8 },
     sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        marginBottom: 14,
+        flexDirection: 'row', alignItems: 'center',
+        justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 14,
     },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#0f172a',
-        letterSpacing: -0.3,
-    },
+    sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a', letterSpacing: -0.3 },
     sectionCount: {
-        backgroundColor: '#1D356B',
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '700',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
-        overflow: 'hidden',
+        backgroundColor: '#1D356B', color: '#fff', fontSize: 12, fontWeight: '700',
+        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden',
     },
-
-    // Carrusel
-    carousel: {
-        paddingLeft: 20,
-        paddingRight: 10,
-        gap: CARD_GAP,
-    },
-
-    // Card
+    carousel: { paddingLeft: 20, paddingRight: 10, gap: CARD_GAP },
     card: {
-        width: CARD_WIDTH,
-        backgroundColor: '#fff',
-        borderRadius: 18,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.10,
-        shadowRadius: 10,
-        elevation: 5,
+        width: CARD_WIDTH, backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.10, shadowRadius: 10, elevation: 5,
     },
-    cardImg: {
-        height: 110,
-        position: 'relative',
-    },
-    imgPlaceholder: {
-        backgroundColor: '#dde4f0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imgOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.18)',
-    },
+    cardImg: { height: 110, position: 'relative' },
+    imgPlaceholder: { backgroundColor: '#dde4f0', justifyContent: 'center', alignItems: 'center' },
+    imgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.18)' },
     badgeOverlay: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 20,
-        gap: 4,
+        position: 'absolute', top: 10, right: 10, flexDirection: 'row',
+        alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, gap: 4,
     },
-    dot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-    },
-    badgeText: {
-        fontSize: 11,
-        fontWeight: '600',
-    },
-    cardInfo: {
-        padding: 14,
-    },
-    cardTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#0f172a',
-        marginBottom: 6,
-    },
-    cardDate: {
-        fontSize: 12,
-        color: '#64748b',
-        marginBottom: 2,
-    },
-
-    // Divider
-    divider: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 10,
-        position: 'relative',
-    },
-    notch: {
-        position: 'absolute',
-        left: -8,
-        width: 14,
-        height: 14,
-        borderRadius: 7,
-        backgroundColor: '#F2F2F2',
-    },
-    dashedLine: {
-        flex: 1,
-        height: 1,
-        borderStyle: 'dashed',
-        borderWidth: 1,
-        borderColor: '#cbd5e1',
-        marginHorizontal: 8,
-    },
-    cardFooter: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    footerAsistencia: {
-        fontSize: 12,
-        color: '#475569',
-        fontWeight: '500',
-    },
-    tapHint: {
-        fontSize: 11,
-        color: '#1D356B',
-        fontWeight: '700',
-    },
-
-    // States
-    stateBox: {
-        alignItems: 'center',
-        paddingVertical: 24,
-        gap: 8,
-    },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    badgeText: { fontSize: 11, fontWeight: '600' },
+    cardInfo: { padding: 14 },
+    cardTitle: { fontSize: 15, fontWeight: '700', color: '#0f172a', marginBottom: 6 },
+    cardDate: { fontSize: 12, color: '#64748b', marginBottom: 2 },
+    divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 10, position: 'relative' },
+    notch: { position: 'absolute', left: -8, width: 14, height: 14, borderRadius: 7, backgroundColor: '#F2F2F2' },
+    dashedLine: { flex: 1, height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: '#cbd5e1', marginHorizontal: 8 },
+    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    footerAsistencia: { fontSize: 12, color: '#475569', fontWeight: '500' },
+    tapHint: { fontSize: 11, color: '#1D356B', fontWeight: '700' },
+    stateBox: { alignItems: 'center', paddingVertical: 24, gap: 8 },
     stateText: { fontSize: 13, color: '#94a3b8' },
     errorText: { fontSize: 14, color: '#ef4444', textAlign: 'center' },
-    retryBtn: {
-        backgroundColor: '#1D356B',
-        paddingHorizontal: 20,
-        paddingVertical: 8,
-        borderRadius: 10,
-    },
+    retryBtn: { backgroundColor: '#1D356B', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10 },
     retryText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-
-    // Empty
-    empty: {
-        alignItems: 'center',
-        paddingVertical: 28,
-        paddingHorizontal: 32,
-        gap: 8,
-    },
+    empty: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 32, gap: 8 },
     emptyTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
     emptySub: { fontSize: 13, color: '#94a3b8', textAlign: 'center', lineHeight: 20 },
-
-    // Modal
     modalBackdrop: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.55)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
+        flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+        justifyContent: 'center', alignItems: 'center', padding: 24,
     },
     modalCard: {
-        backgroundColor: '#fff',
-        borderRadius: 24,
-        padding: 24,
-        width: '100%',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
-        elevation: 12,
+        backgroundColor: '#fff', borderRadius: 24, padding: 24, width: '100%',
+        alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2, shadowRadius: 20, elevation: 12,
     },
-    modalHeader: {
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 16,
-        gap: 8,
-    },
-    modalTitle: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: '#0f172a',
-        textAlign: 'center',
-    },
+    modalHeader: { width: '100%', alignItems: 'center', marginBottom: 16, gap: 8 },
+    modalTitle: { fontSize: 17, fontWeight: '700', color: '#0f172a', textAlign: 'center' },
     modalBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 20,
-        gap: 5,
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 5,
     },
     modalBadgeText: { fontSize: 12, fontWeight: '600' },
     qrContainer: {
-        width: 220,
-        height: 220,
-        borderRadius: 16,
-        overflow: 'hidden',
-        backgroundColor: '#f1f5f9',
-        marginBottom: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: 220, height: 220, borderRadius: 16, overflow: 'hidden',
+        backgroundColor: '#f1f5f9', marginBottom: 16, justifyContent: 'center', alignItems: 'center',
     },
     qrImage: { width: 210, height: 210 },
     qrPlaceholder: { justifyContent: 'center', alignItems: 'center' },
     qrPlaceholderText: { color: '#94a3b8', fontSize: 14 },
-    modalDate: {
-        fontSize: 13,
-        color: '#475569',
-        marginBottom: 6,
-        textAlign: 'center',
-    },
-    modalAsistencia: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#334155',
-        marginBottom: 14,
-    },
+    modalDate: { fontSize: 13, color: '#475569', marginBottom: 6, textAlign: 'center' },
+    modalAsistencia: { fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 14 },
     modalTokenBox: {
-        backgroundColor: '#f1f5f9',
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        width: '100%',
-        marginBottom: 20,
+        backgroundColor: '#f1f5f9', borderRadius: 10,
+        paddingHorizontal: 14, paddingVertical: 8, width: '100%', marginBottom: 20,
     },
-    modalTokenLabel: {
-        fontSize: 9,
-        color: '#94a3b8',
-        fontWeight: '700',
-        letterSpacing: 1,
-        marginBottom: 2,
-    },
-    modalTokenValue: {
-        fontSize: 12,
-        color: '#1D356B',
-        fontWeight: '600',
-        fontFamily: 'monospace',
-    },
-    closeBtn: {
-        backgroundColor: '#1D356B',
-        paddingVertical: 12,
-        paddingHorizontal: 40,
-        borderRadius: 12,
-    },
-    closeBtnText: {
-        color: '#fff',
-        fontWeight: '700',
-        fontSize: 15,
-    },
+    modalTokenLabel: { fontSize: 9, color: '#94a3b8', fontWeight: '700', letterSpacing: 1, marginBottom: 2 },
+    modalTokenValue: { fontSize: 12, color: '#1D356B', fontWeight: '600', fontFamily: 'monospace' },
+    closeBtn: { backgroundColor: '#1D356B', paddingVertical: 12, paddingHorizontal: 40, borderRadius: 12 },
+    closeBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
 
 export default EventTicketSection;
